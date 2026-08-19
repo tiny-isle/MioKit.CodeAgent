@@ -10,14 +10,15 @@ MCP 取代的是 **Agent 自己执行创建 / 打包 / 验包**。skill 文中�
 
 | Skill 内容 | MCP | 说明 |
 |------------|-----|------|
-| 检查 / 安装 / 更新 `MioKit.Plugin.Templates` | `ensure_plugin_templates` | 默认 nuget.org；无包则安装，有则更新。文件夹路径安装要卸载 |
-| `dotnet new miokit-plugin` / `miokit-plugin-webview2` | `create_plugin` | 先 ensure，再按 `name` / `output` / `pluginId` 等创建 |
+| 本机开发环境（.NET 10 SDK；WebView2 再加 Runtime） | `check_dev_environment` | 创建 / 打包前的第一道门；`create_plugin` / `ensure_plugin_templates` / `pack_plugin` 内部复用 |
+| 检查 / 安装 / 更新 `MioKit.Plugin.Templates` | `ensure_plugin_templates` | 先环境检查。默认 nuget.org；无包则安装，有则更新。文件夹路径安装要卸载 |
+| `dotnet new miokit-plugin` / `miokit-plugin-webview2` | `create_plugin` | 先 check 环境，再 ensure，再按 `name` / `output` / `pluginId` 等创建 |
 | `pluginId` 形态 `com.<org>.plugin.<slug>` | `suggest_plugin_id` | 创建前生成；`create_plugin` 可复用 |
 | 禁止手抄骨架；禁止本地文件夹 `dotnet new install` | 约束写入上述 tools | 输出目录已有 `plugin.json` 则拒绝覆盖 |
 | `-n` 派生命名、模板 shortName 选型 | **留 skill** | 判断用哪套模板、如何起解决方案名 |
 | 创建后读 development skill、补节点 | **留 skill** | 模板不预置搜索组 / 可执行节点 |
 
-Agent 不要自己拼 `dotnet new`。工作区尚无插件时：调 `create_plugin`，不要改去手写 `plugin/`。
+Agent 不要自己拼 `dotnet new`。工作区尚无插件时：先 `check_dev_environment`，再调 `create_plugin`，不要改去手写 `plugin/`。
 
 ---
 
@@ -35,7 +36,8 @@ Agent 不要自己拼 `dotnet new`。工作区尚无插件时：调 `create_plug
 
 | Skill 内容 | MCP |
 |------------|-----|
-| nupkg 根布局、PackageId / PackageVersion、`dotnet pack` 调用 | `pack_plugin` |
+| 目标框架 `net10.0-windows…`；WebView2 本机 Runtime | `check_dev_environment` |
+| nupkg 根布局、PackageId / PackageVersion、`dotnet pack` 调用 | `pack_plugin`（先 `check_dev_environment`） |
 | 解压检查、禁止宿主共享 DLL、图标双路径、`nugetDependents`、卸载产物 | `inspect_plugin_nupkg`；resource `miokit://packaging-hints` |
 | 安装 Sdk / Templates（公共 NuGet 源） | `ensure_plugin_templates`（及模板还原）。默认 nuget.org；`miokit-nuget-url` 只作非公共源覆盖 |
 | 把插件 nupkg 推到商店、nuget.org 或其它源 | **不进 MCP**；inspect 通过后由用户决定如何上传 |

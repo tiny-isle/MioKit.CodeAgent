@@ -1,4 +1,5 @@
 import type { McpServer } from '@modelcontextprotocol/server';
+import { registerCheckDevEnvironment } from './check-dev-environment.js';
 import { registerCreatePlugin } from './create-plugin.js';
 import { registerEnsurePluginTemplates } from './ensure-plugin-templates.js';
 import { registerGenerateGuid } from './generate-guid.js';
@@ -9,6 +10,7 @@ import { registerValidatePluginJson } from './validate-plugin-json.js';
 
 /** Register every MCP tool on the server. Add new tools here. */
 export function registerTools(server: McpServer): void {
+  registerCheckDevEnvironment(server);
   registerEnsurePluginTemplates(server);
   registerSuggestPluginId(server);
   registerCreatePlugin(server);

@@ -1,11 +1,12 @@
 # miokit-mcp
 
-MioKit 的 Node.js MCP 服务。P0 工具覆盖插件创建、标识、`plugin.json` 校验、打包与验包；P1 及之后的能力见 [`.cursor/docs/README.md`](.cursor/docs/README.md)。
+MioKit 的 Node.js MCP 服务。P0 工具覆盖开发环境检查、插件创建、标识、`plugin.json` 校验、打包与验包；P1 及之后的能力见 [`.cursor/docs/README.md`](.cursor/docs/README.md)。
 
 ## 要求
 
 - Node.js 20+
-- 本机 `dotnet` SDK（`ensure_plugin_templates` / `create_plugin` / `pack_plugin`）
+- 本机 **.NET 10 SDK**（`check_dev_environment` / `ensure_plugin_templates` / `create_plugin` / `pack_plugin`）
+- WebView2 插件另需本机 **Microsoft Edge WebView2 Runtime**；`pnpm` 缺失只警告
 
 ## 开发
 
@@ -32,12 +33,13 @@ npm run inspect
 
 | 名称 | 说明 |
 |------|------|
+| `check_dev_environment` | 先查 .NET 10 SDK；WebView2 再查本机 Runtime |
 | `ensure_plugin_templates` | 从 NuGet 检查 / 安装 / 更新 `MioKit.Plugin.Templates`；拒绝本地文件夹安装 |
 | `suggest_plugin_id` | 生成 `com.<org>.plugin.<slug>` |
-| `create_plugin` | 先 ensure，再 `dotnet new miokit-plugin` / `miokit-plugin-webview2` |
+| `create_plugin` | 先环境检查，再 ensure，再 `dotnet new miokit-plugin` / `miokit-plugin-webview2` |
 | `generate_guid` | TypeId / EAV `WithId` 等稳定 GUID |
 | `validate_plugin_json` | 必填字段、禁止旧发布字段、`System.Version` |
-| `pack_plugin` | `dotnet pack` 到 `artifacts/`；默认接着 inspect |
+| `pack_plugin` | `dotnet pack` 到 `artifacts/`；先环境检查，默认接着 inspect |
 | `inspect_plugin_nupkg` | 解压检查 nupkg 是否符合插件包规范 |
 
 ## Resources

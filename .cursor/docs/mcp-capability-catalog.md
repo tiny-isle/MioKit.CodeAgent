@@ -8,7 +8,28 @@
 
 ## P0 — 创建 / 标识 / 打包检查（已实现）
 
-开发主路径。创建前必须先保证本机模板包可用且为 NuGet 来源的最新版。
+开发主路径。**先检查本机开发环境**，再保证模板包可用且为 NuGet 来源的最新版。
+
+### `check_dev_environment`
+
+| 项 | 内容 |
+|----|------|
+| 形态 | tool |
+| 来源 | `nuget.md` TFM `net10.0-windows…`；WebView2 模板需要本机 Runtime |
+| 何时调 | **最先**；用户问「环境够不够」；以及 `ensure_plugin_templates` / `create_plugin` / `pack_plugin` 内部都会再跑一遍 |
+| 为何 MCP | 本机 SDK / Runtime 必须实际探测；skill 写安装步骤无法保证各机器一致 |
+
+`kind`：`standard` 或 `webview2`（可由模板或 `plugin/vue-ui` 推断）。
+
+| kind | 硬失败 | 仅 warning |
+|------|--------|------------|
+| `standard`（`miokit-plugin`） | `.NET 10` SDK（`dotnet --list-sdks` 含 10.x） | — |
+| `webview2`（`miokit-plugin-webview2`） | `.NET 10` SDK + Microsoft Edge WebView2 **Evergreen Runtime** | 缺 `pnpm`（Vue `plugin/vue-ui` 构建用） |
+
+- 不把 `MioKit.Webview2` NuGet 当机器预装项；那是模板还原出来的包
+- WebView2 查的是本机 Runtime（注册表 Evergreen client id `{F3017226-…}` 或 `EdgeWebView\Application`），不是 NuGet
+- 失败则停，不要继续装模板或 `dotnet new` / `dotnet pack`
+- 非 Windows 上 `webview2` 直接失败（Runtime 不可用）
 
 ### `ensure_plugin_templates`
 
@@ -16,10 +37,10 @@
 |----|------|
 | 形态 | tool |
 | 来源 | `miokit-plugin-new` §1 |
-| 何时调 | 创建插件之前；或用户问「模板装了没 / 要不要更新」 |
+| 何时调 | 创建插件之前（环境检查通过之后）；或用户问「模板装了没 / 要不要更新」 |
 | 为何 MCP | 本机状态 + NuGet 源版本必须实际查询和安装，skill 写步骤无法保证各机器一致 |
 
-流程：
+流程：先跑 `check_dev_environment`（`standard`，只需 .NET 10 SDK）。失败则返回，不碰模板。
 
 1. `dotnet new list miokit` 判断是否已安装 `MioKit.Plugin.Templates`
 2. 若 list 出现**文件夹路径**安装：失败，并 hint 先卸载文件夹来源，只保留 NuGet 包
@@ -38,7 +59,7 @@
 | 何时调 | 工作区尚无 `plugin/plugin.json`，用户要新建插件 |
 | 为何 MCP | 必须先更新模板再 `dotnet new`；手抄骨架会与模板漂移。MCP 一升级，所有项目用同一套创建流程 |
 
-**先跑** `ensure_plugin_templates`，成功后再创建。
+**先跑** `check_dev_environment`（`kind` 由模板决定），再跑 `ensure_plugin_templates`，成功后再创建。
 
 - 模板：`miokit-plugin` 或 `miokit-plugin-webview2`
 - 参数对齐 CLI：`name`、`output`、`pluginId`、`displayName`、`description`、`pluginAuthor`
@@ -96,13 +117,14 @@ Agent 不要自己拼 `dotnet new` 命令。
 | 何时调 | 本地要打出可安装的 `.nupkg` |
 | 为何 MCP | 打包命令与输出目录必须全项目一致；MCP 同时负责确认产物符合规范，规则升级只改 MCP |
 
-入参：插件解决方案根路径。`PackageVersion` 必填；未传 `PackageId` 时用 csproj 项目名。
+入参：插件解决方案根路径。`PackageVersion` 必填；未传 `PackageId` 时用 csproj 项目名。定位布局后先跑 `check_dev_environment`（有 `plugin/vue-ui` 则为 `webview2`）。
 
 1. 定位 `plugin/plugin.json` 与 `plugin/*.csproj`（找不到则报错并 hint）
-2. `dotnet pack <csproj> -c Release -p:PackageId=… -p:PackageVersion=… -o <solution>/artifacts`
-3. 不手抄 ZIP。入口 DLL / `plugin.json` 进 nupkg 根目录仍靠模板 **csproj Pack / MSBuild**
-4. WebView2：打包前探测 `plugin/vue-ui` / `plugin/ui/dist`，缺前端产物则 warning，hint 先 `pnpm build`
-5. 默认接着跑 `inspect_plugin_nupkg`；有 `errors` 则整体失败。成功时返回 nupkg 路径与检查报告
+2. `check_dev_environment`（有 `plugin/vue-ui` 则为 `webview2`，否则 `standard`）；失败则停
+3. `dotnet pack <csproj> -c Release -p:PackageId=… -p:PackageVersion=… -o <solution>/artifacts`
+4. 不手抄 ZIP。入口 DLL / `plugin.json` 进 nupkg 根目录仍靠模板 **csproj Pack / MSBuild**
+5. WebView2：打包前探测 `plugin/vue-ui` / `plugin/ui/dist`，缺前端产物则 warning，hint 先 `pnpm build`
+6. 默认接着跑 `inspect_plugin_nupkg`；有 `errors` 则整体失败。成功时返回 nupkg 路径与检查报告
 
 Agent 打包后必须立刻 `inspect_plugin_nupkg`。**打包不算完成，除非检查通过。** 实现时 `pack_plugin` 应默认带 `inspect: true`：先 `dotnet pack`，再跑同一套规范检查，有 `errors` 则整体失败并返回 hints。MCP 不上传、不 `nuget push`；产物路径交给用户自行决定怎么分发。
 

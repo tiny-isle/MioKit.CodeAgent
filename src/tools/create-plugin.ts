@@ -8,7 +8,7 @@ export function registerCreatePlugin(server: McpServer): void {
     'create_plugin',
     {
       description:
-        'Create a MioKit plugin solution with dotnet new. Call when the workspace has no plugin/plugin.json and the user wants a new plugin. Runs ensure_plugin_templates first. Do not hand-write the solution skeleton or invoke dotnet new yourself.',
+        'Create a MioKit plugin solution with dotnet new. Call when the workspace has no plugin/plugin.json and the user wants a new plugin. Runs check_dev_environment then ensure_plugin_templates first. Do not hand-write the solution skeleton or invoke dotnet new yourself.',
       inputSchema: z.object({
         template: z
           .enum(['miokit-plugin', 'miokit-plugin-webview2'])

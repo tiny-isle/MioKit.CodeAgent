@@ -30,8 +30,9 @@ Agent **读** skill 做选型；**调** MCP 做创建、生成 GUID、校验清�
 ```text
 Agent
   ├─ skill：约定与选型
-  └─ MCP：ensure 模板 → create → 开发中校验/生成 → pack → inspect
+  └─ MCP：check 环境 → ensure 模板 → create → 开发中校验/生成 → pack → inspect
            │
+           ├─ 本机：.NET 10 SDK；WebView2 插件再查 WebView2 Runtime
            ├─ NuGet.org：安装或更新 MioKit.Plugin.Templates（及模板带入的 Sdk）
            └─ 插件工作区：dotnet new / dotnet pack；解压检查 nupkg
 ```
@@ -61,9 +62,10 @@ Agent
 
 | 名称 | 形态 | 说明 |
 |------|------|------|
+| `check_dev_environment` | tool | 先查 .NET 10 SDK；WebView2 再查本机 Runtime；缺 pnpm 仅 warning |
 | `ensure_plugin_templates` | tool | 从 NuGet 安装或更新 `MioKit.Plugin.Templates`；文件夹来源则失败 |
 | `suggest_plugin_id` | tool | `com.<org>.plugin.<slug>` |
-| `create_plugin` | tool | 先 ensure，再 `dotnet new`；已有 `plugin.json` 则拒绝覆盖 |
+| `create_plugin` | tool | 先环境检查，再 ensure，再 `dotnet new`；已有 `plugin.json` 则拒绝覆盖 |
 | `generate_guid` | tool | RFC 4122 UUID v4。默认大写、带连字符，对齐 C# `Guid` 字面量（Const `TypeId`、EAV `WithId`） |
 | `validate_plugin_json` | tool | 必填 / 禁止字段与 `System.Version` |
 | `pack_plugin` | tool | `dotnet pack` 到 `artifacts/`；默认 inspect，有 errors 则失败 |

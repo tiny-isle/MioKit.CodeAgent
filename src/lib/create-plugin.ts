@@ -6,6 +6,13 @@ import {
   runDotnet,
   type DotnetRunner,
 } from './dotnet.js';
+import {
+  checkDevEnvironmentWith,
+  pluginKindFromTemplate,
+  type CheckDevEnvironmentDeps,
+  type CheckDevEnvironmentResult,
+  type PluginKind,
+} from './dev-environment.js';
 import { parsePluginJsonText } from './plugin-json.js';
 import { suggestPluginId } from './plugin-id.js';
 import {
@@ -35,6 +42,7 @@ export interface CreatePluginResult {
   template?: PluginTemplate;
   pluginId?: string;
   pluginJsonPath?: string;
+  environment?: CheckDevEnvironmentResult;
   ensure?: EnsureTemplatesResult;
   errors: string[];
   hints: string[];
@@ -43,6 +51,8 @@ export interface CreatePluginResult {
 export interface CreatePluginDeps {
   runDotnet: DotnetRunner;
   ensure?: EnsureTemplatesDeps;
+  checkEnvironment?: (kind: PluginKind) => Promise<CheckDevEnvironmentResult>;
+  environment?: Partial<CheckDevEnvironmentDeps>;
 }
 
 export function defaultCreatePluginDeps(): CreatePluginDeps {
@@ -55,6 +65,21 @@ export async function createPlugin(
 ): Promise<CreatePluginResult> {
   const outputPath = path.resolve(input.output);
   const pluginJsonPath = path.join(outputPath, 'plugin', 'plugin.json');
+  const kind = pluginKindFromTemplate(input.template);
+  const environment = await (deps.checkEnvironment
+    ? deps.checkEnvironment(kind)
+    : checkDevEnvironmentWith(kind, { runDotnet: deps.runDotnet, ...deps.environment }));
+
+  if (!environment.ok) {
+    return {
+      ok: false,
+      outputPath,
+      template: input.template,
+      environment,
+      errors: environment.errors,
+      hints: environment.hints,
+    };
+  }
 
   if (await fileExists(pluginJsonPath)) {
     return {
@@ -62,17 +87,23 @@ export async function createPlugin(
       outputPath,
       template: input.template,
       pluginJsonPath,
+      environment,
       errors: [`Refusing to overwrite existing plugin at ${pluginJsonPath}`],
       hints: ['Pick a different output directory, or continue with the existing plugin project.'],
     };
   }
 
-  const ensure = await ensurePluginTemplates(deps.ensure ?? defaultEnsureTemplatesDeps());
+  const ensureDeps = deps.ensure ?? defaultEnsureTemplatesDeps();
+  const ensure = await ensurePluginTemplates({
+    ...ensureDeps,
+    checkEnvironment: ensureDeps.checkEnvironment ?? (async () => environment),
+  });
   if (!ensure.ok) {
     return {
       ok: false,
       outputPath,
       template: input.template,
+      environment,
       ensure,
       errors: ensure.errors,
       hints: ensure.hints,
@@ -89,6 +120,7 @@ export async function createPlugin(
         ok: false,
         outputPath,
         template: input.template,
+        environment,
         ensure,
         errors: [message],
         hints: ['Pass pluginId explicitly, or provide an org and name that slugify to letters/digits.'],
@@ -117,9 +149,12 @@ export async function createPlugin(
       outputPath,
       template: input.template,
       pluginId,
+      environment,
       ensure,
       errors: [formatDotnetFailure(result)],
-      hints: ['Do not hand-write the plugin solution; retry create_plugin after ensure_plugin_templates succeeds.'],
+      hints: [
+        'Do not hand-write the plugin solution; retry create_plugin after check_dev_environment and ensure_plugin_templates succeed.',
+      ],
     };
   }
 
@@ -130,9 +165,10 @@ export async function createPlugin(
     template: input.template,
     pluginId: actualId,
     pluginJsonPath,
+    environment,
     ensure,
     errors: [],
-    hints: [],
+    hints: environment.hints,
   };
 }
 

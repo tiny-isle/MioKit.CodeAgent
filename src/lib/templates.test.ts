@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { compareNuGetVersions, getNugetSourceOverride, nugetSourceArgs } from './nuget-source.js';
 import { ensurePluginTemplates, parseInstalledTemplateSources } from './templates.js';
+import type { CheckDevEnvironmentResult } from './dev-environment.js';
 import type { DotnetRunResult } from './dotnet.js';
 
 function fakeDotnet(stdout: string, exitCode = 0): DotnetRunResult {
@@ -12,6 +13,17 @@ function fakeDotnet(stdout: string, exitCode = 0): DotnetRunResult {
     stderr: '',
     exitCode,
     timedOut: false,
+  };
+}
+
+function okEnv(): CheckDevEnvironmentResult {
+  return {
+    ok: true,
+    kind: 'standard',
+    dotnetSdk: { ok: true, versions: ['10.0.100'], selected: '10.0.100' },
+    errors: [],
+    warnings: [],
+    hints: [],
   };
 }
 
@@ -82,6 +94,7 @@ Currently installed items:
 `);
       },
       fetchLatestVersion: async () => '1.0.0',
+      checkEnvironment: async () => okEnv(),
     });
     assert.equal(result.ok, false);
     assert.equal(result.source, 'folder');
@@ -102,6 +115,7 @@ Currently installed items:
         return fakeDotnet(commands.some((item) => item[1] === 'install') ? nugetUninstall : 'Currently installed items:');
       },
       fetchLatestVersion: async () => '1.0.0',
+      checkEnvironment: async () => okEnv(),
     });
     assert.equal(result.ok, true);
     assert.equal(result.updated, true);
@@ -122,9 +136,32 @@ Currently installed items:
         return fakeDotnet(nugetUninstall);
       },
       fetchLatestVersion: async () => '1.2.0',
+      checkEnvironment: async () => okEnv(),
     });
     assert.equal(result.ok, true);
     assert.equal(result.updated, true);
     assert.ok(commands.some((item) => item.includes('MioKit.Plugin.Templates::1.2.0')));
+  });
+
+  it('fails before install when the .NET 10 SDK is missing', async () => {
+    const commands: string[][] = [];
+    const result = await ensurePluginTemplates({
+      runDotnet: async (args) => {
+        commands.push(args);
+        return fakeDotnet('');
+      },
+      fetchLatestVersion: async () => '1.0.0',
+      checkEnvironment: async () => ({
+        ok: false,
+        kind: 'standard',
+        dotnetSdk: { ok: false, versions: ['8.0.400'] },
+        errors: ['.NET 10 SDK is required; found 8.0.400.'],
+        warnings: [],
+        hints: ['Install the .NET 10 SDK'],
+      }),
+    });
+    assert.equal(result.ok, false);
+    assert.match(result.errors[0]!, /10 SDK/);
+    assert.equal(commands.length, 0);
   });
 });

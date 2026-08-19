@@ -11,6 +11,13 @@ import {
   WEBVIEW2_BUILD_HINT,
   type InspectNupkgResult,
 } from './nupkg-inspect.js';
+import {
+  checkDevEnvironmentWith,
+  pluginKindFromLayout,
+  type CheckDevEnvironmentDeps,
+  type CheckDevEnvironmentResult,
+  type PluginKind,
+} from './dev-environment.js';
 import { PluginLayoutError, resolvePluginLayout } from './plugin-layout.js';
 
 export interface PackPluginInput {
@@ -25,6 +32,7 @@ export interface PackPluginResult {
   nupkgPath?: string;
   packageId?: string;
   packageVersion?: string;
+  environment?: CheckDevEnvironmentResult;
   inspect?: InspectNupkgResult;
   errors: string[];
   warnings: string[];
@@ -34,6 +42,8 @@ export interface PackPluginResult {
 export interface PackPluginDeps {
   runDotnet: DotnetRunner;
   inspectNupkg?: typeof inspectPluginNupkgFile;
+  checkEnvironment?: (kind: PluginKind) => Promise<CheckDevEnvironmentResult>;
+  environment?: Partial<CheckDevEnvironmentDeps>;
 }
 
 export function defaultPackPluginDeps(): PackPluginDeps {
@@ -60,11 +70,25 @@ export async function packPlugin(
     throw err;
   }
 
+  const kind = pluginKindFromLayout(layout.hasVueUi);
+  const environment = await (deps.checkEnvironment
+    ? deps.checkEnvironment(kind)
+    : checkDevEnvironmentWith(kind, { runDotnet: deps.runDotnet, ...deps.environment }));
+  if (!environment.ok) {
+    return {
+      ok: false,
+      environment,
+      errors: environment.errors,
+      warnings: environment.warnings,
+      hints: environment.hints,
+    };
+  }
+
   const packageId = input.packageId?.trim() || layout.projectName;
   const packageVersion = input.packageVersion.trim();
   const artifactsDir = path.join(layout.solutionRoot, 'artifacts');
-  const warnings: string[] = [];
-  const hints: string[] = [];
+  const warnings: string[] = [...environment.warnings];
+  const hints: string[] = [...environment.hints];
 
   if (layout.hasVueUi && !layout.hasUiDist) {
     warnings.push('WebView2 frontend output plugin/ui/dist is missing');
@@ -92,6 +116,7 @@ export async function packPlugin(
       ok: false,
       packageId,
       packageVersion,
+      environment,
       errors: [formatDotnetFailure(result)],
       warnings,
       hints,
@@ -104,6 +129,7 @@ export async function packPlugin(
       ok: false,
       packageId,
       packageVersion,
+      environment,
       errors: [`dotnet pack succeeded but no nupkg was found in ${artifactsDir}`],
       warnings,
       hints,
@@ -116,6 +142,7 @@ export async function packPlugin(
       nupkgPath,
       packageId,
       packageVersion,
+      environment,
       errors: [],
       warnings,
       hints,
@@ -129,6 +156,7 @@ export async function packPlugin(
     nupkgPath,
     packageId,
     packageVersion,
+    environment,
     inspect,
     errors: inspect.ok ? [] : inspect.errors,
     warnings: [...warnings, ...inspect.warnings],

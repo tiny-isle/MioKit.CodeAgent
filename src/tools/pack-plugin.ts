@@ -8,7 +8,7 @@ export function registerPackPlugin(server: McpServer): void {
     'pack_plugin',
     {
       description:
-        'Pack a MioKit plugin with dotnet pack into <solution>/artifacts. PackageVersion is required. By default inspect_plugin_nupkg runs afterwards; packing is not complete unless that check has no errors. Does not nuget push.',
+        'Pack a MioKit plugin with dotnet pack into <solution>/artifacts. Runs check_dev_environment first (.NET 10 SDK; WebView2 Runtime when plugin/vue-ui exists). PackageVersion is required. By default inspect_plugin_nupkg runs afterwards; packing is not complete unless that check has no errors. Does not nuget push.',
       inputSchema: z.object({
         solutionRoot: z
           .string()

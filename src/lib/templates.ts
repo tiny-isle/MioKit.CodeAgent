@@ -5,6 +5,10 @@ import {
   type DotnetRunner,
 } from './dotnet.js';
 import {
+  checkDevEnvironmentWith,
+  type CheckDevEnvironmentResult,
+} from './dev-environment.js';
+import {
   compareNuGetVersions,
   fetchLatestPackageVersion,
   nugetSourceArgs,
@@ -29,6 +33,7 @@ export interface EnsureTemplatesResult {
   currentVersion?: string;
   latestVersion?: string;
   folderPath?: string;
+  environment?: CheckDevEnvironmentResult;
   errors: string[];
   hints: string[];
 }
@@ -40,6 +45,7 @@ export interface EnsureTemplatesDeps {
     sourceUrl?: string,
   ) => Promise<string | undefined>;
   env?: NodeJS.ProcessEnv;
+  checkEnvironment?: () => Promise<CheckDevEnvironmentResult>;
 }
 
 export function defaultEnsureTemplatesDeps(
@@ -58,6 +64,20 @@ export async function ensurePluginTemplates(
   deps: EnsureTemplatesDeps = defaultEnsureTemplatesDeps(),
 ): Promise<EnsureTemplatesResult> {
   const env = deps.env ?? process.env;
+  const environment = await (deps.checkEnvironment
+    ? deps.checkEnvironment()
+    : checkDevEnvironmentWith('standard', { runDotnet: deps.runDotnet }));
+  if (!environment.ok) {
+    return {
+      ok: false,
+      installed: false,
+      updated: false,
+      environment,
+      errors: environment.errors,
+      hints: environment.hints,
+    };
+  }
+
   const listResult = await deps.runDotnet(['new', 'list', 'miokit']);
   const uninstallResult = await deps.runDotnet(['new', 'uninstall']);
 
