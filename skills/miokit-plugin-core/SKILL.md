@@ -6,9 +6,12 @@ description: >-
 
 # MioKit 插件核心开发
 
-本 Skill 负责已有 MioKit 插件项目的非 UI 能力。按当前任务只读取对应的
-`references/*.md`，不要一次通读全部参考文档。参考文档同时包含 API 约定和使用规范，
+本 Skill 负责已有 MioKit 插件项目的非 UI 能力。参考文档同时包含 API 约定和使用规范，
 它们是实现插件时的规范真源。
+
+**上下文边界：** 先从主题索引打开与当前改动直接对应的一篇文档。只有它明确链接的能力
+也是当前任务的一部分时，才继续打开下一篇；不要预读节点、Feature、搜索或 EAV 文档。
+一个主题的“路由”页只用于选择其下的一篇细分文档，不替代细分文档本身。
 
 ## 路由
 
@@ -32,16 +35,17 @@ using MioKit.Sdk;
 不要根据磁盘目录臆造命名空间。`MioKit.Sdk.Controls` 只包含少数 Avalonia 控件；
 `MioWebview2` 和 `[JsService]` 位于 `MioKit.Webview2`，详见 WebView2 Skill。
 
-## 推荐流程
+## 阅读流程
 
 1. 确认工作区已经由 `miokit-plugin-new` 创建，并按需建立 `Features`、`Models`、
    `Nodes`、`Services` 和 `Views` 目录；不要添加空占位文件。
-2. 阅读 `plugin-core.md`，实现 Const、Register、`PluginBase`、容器边界和生命周期。
-3. 阅读 `nodes-and-tree.md`、`features.md` 和 `search.md`，实现搜索组、可执行节点、
-   Feature 组合与挂树逻辑；模板不会预置业务节点。
-4. 按需读取扩展属性、搜索附着、结果菜单、调用快照、宿主服务和 Hook 文档。
-5. 使用 MCP 工具校验 `plugin.json`、生成所需 Guid、打包并检查 nupkg；工具入口和
-   参数以当前 MCP schema 为准，不自行执行仓库脚本或 `dotnet pack`。
+2. 按主题索引选择**一项**与当前改动直接相关的参考并实现。入口或生命周期改动才读
+   `plugin-core.md`；新增节点才读 `nodes-and-tree.md`；搜索改动才读 `search.md`。
+3. 文档涉及某一 Feature、属性或搜索框附着时，先打开该主题的路由页，再只选一个细分
+   文档。不要因为创建节点就预读全部 Feature、搜索和 EAV 规则。
+4. 交付前仅按改动范围补读检查项；打包时使用 MCP 工具校验 `plugin.json`、生成所需
+   Guid、打包并检查 nupkg。工具入口和参数以当前 MCP schema 为准，不自行执行仓库脚本
+   或 `dotnet pack`。
 
 ## 主题索引
 
@@ -50,10 +54,10 @@ using MioKit.Sdk;
 | 插件入口、DI、生命周期 | [plugin-core.md](references/plugin-core.md) |
 | `plugin.json` | [plugin-json.md](references/plugin-json.md) |
 | 节点、挂树、数据访问 | [nodes-and-tree.md](references/nodes-and-tree.md) |
-| Feature | [features.md](references/features.md) |
-| EAV、Setting、Memory | [extension-properties.md](references/extension-properties.md) |
+| Feature（先选基础或搜索/UI） | [features.md](references/features.md) |
+| EAV、Setting、Memory（先选定义或高级） | [extension-properties.md](references/extension-properties.md) |
 | 搜索 | [search.md](references/search.md) |
-| 附着到搜索框 | [attach-search-panel.md](references/attach-search-panel.md) |
+| 附着到搜索框（先选基础或 command） | [attach-search-panel.md](references/attach-search-panel.md) |
 | 结果菜单 | [result-action.md](references/result-action.md) |
 | 调用快照 | [invocation-snapshot.md](references/invocation-snapshot.md) |
 | 宿主服务和事件 | [host-services.md](references/host-services.md) |
