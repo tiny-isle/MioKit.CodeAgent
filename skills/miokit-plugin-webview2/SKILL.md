@@ -7,8 +7,8 @@ description: >-
 # MioKit WebView2 UI
 
 本 Skill 负责 WebView2 宿主和 Vue 前端之间的边界。插件生命周期、节点、Feature、
-服务注册和通用 NuGet/打包规则由 `miokit-plugin-core` 负责；网页组件和设计系统优先
-遵循模板内的 `miokit-ui-template` Skill。
+服务注册和通用 NuGet/打包规则由 `miokit-plugin-core` 负责；网页组件、主题和交互规范
+由本 Skill 的 `vue-ui.md` 参考文档定义，不依赖生成项目内的 `.agents` 文档。
 
 ## 路由
 
@@ -21,6 +21,7 @@ description: >-
 ## 参考文档
 
 - [vue-bridge.md](references/vue-bridge.md)：C# `[JsService]`、Vue bridge、属性/集合/事件、主题同步和调试。
+- [vue-ui.md](references/vue-ui.md)：Vue 工程结构、主题、组件、快捷键、样式与交互规范。
 - [webview2-packaging.md](references/webview2-packaging.md)：前端构建、`ui/dist`、运行时加载和 Pack 配置。
 
 ## 工作约定
@@ -33,3 +34,5 @@ description: >-
    `postMessage`。
 4. 发布前确保 `ui/dist/index.html` 和静态资源被复制到输出目录并进入 nupkg；不要把
    `MioKit.Webview2.dll` 或其他宿主共享 DLL 手动打包。
+5. Vue 界面文案直接写中文，不引入 i18n；优先复用 `components/ui/`，并采用 Tailwind
+   语义化主题类（`bg-background`、`text-foreground`、`border-border` 等）。

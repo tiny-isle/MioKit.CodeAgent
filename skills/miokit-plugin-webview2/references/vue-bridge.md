@@ -2,7 +2,8 @@
 
 插件可用 **Vue 3 + shadcn-vue** 作为 UI 层，**.NET 承载业务逻辑**，通过 WebView2 与 `ServiceBridge` 双向通信——类似 WPF MVVM，但 View 是 Vue 组件，ViewModel 是带 `[JsService]` 的 C# 服务。
 
-前端基础工程来自 **[miokit-ui-template](https://github.com/MioKit-Teams/miokit-ui-template)**。`dotnet new miokit-plugin-webview2` 创建的项目已内置 `plugin/vue-ui/`。**构建产物**由 csproj 复制 `ui/dist/**` 到输出目录。
+`dotnet new miokit-plugin-webview2` 创建的项目已内置 `plugin/vue-ui/`。前端 UI、主题、组件与
+快捷键的开发规范见 [vue-ui.md](vue-ui.md)；**构建产物**由 csproj 复制 `ui/dist/**` 到输出目录。
 
 **路径约定：**
 
@@ -66,7 +67,7 @@ cd plugin/vue-ui
 pnpm build
 ```
 
-模板内 Vue / 主题 / 组件规范见 `vue-ui/.agents/skills/miokit-ui-template/SKILL.md`。
+Vue 工程、主题、组件与快捷键规范见 [vue-ui.md](vue-ui.md)。
 
 创建项目后**只需编写业务代码**：
 
@@ -193,7 +194,7 @@ WebView.Source = new Uri("http://localhost:5173");
 
 ### 4.3 主题同步
 
-`MioWebview2` 设置 WebView2 `PreferredColorScheme`；Vue 侧通过 `window.setColorTheme(payload)` 同步 Avalonia `ShadColorTheme` 色板（实现于模板 `src/lib/colorTheme.js`）。详见 `vue-ui/.agents/skills/miokit-ui-template/SKILL.md`。
+`MioWebview2` 设置 WebView2 `PreferredColorScheme`；Vue 侧通过 `window.setColorTheme(payload)` 同步 Avalonia `ShadColorTheme` 色板（实现于 `src/lib/colorTheme.js`）。调用时机、颜色格式和语义 CSS 映射见 [vue-ui.md](vue-ui.md)。
 
 Avalonia 壳层 AXAML 主题见 `miokit-plugin-avalonia-ui`。
 
@@ -330,7 +331,6 @@ C# 开发时 `WebView.Source = http://localhost:5173`；发布时加载 `ui/dist
 
 | 资源 | 说明 |
 |------|------|
-| [miokit-ui-template](https://github.com/MioKit-Teams/miokit-ui-template) | 官方 Vue 前端模板（WebView2 模板内置为 `plugin/vue-ui/`） |
-| `plugin/vue-ui/.agents/skills/miokit-ui-template/SKILL.md` | 模板内 UI / 主题 / 组件规范 |
+| [vue-ui.md](vue-ui.md) | 内置的 Vue UI、主题、组件与快捷键规范 |
 | 生成项目 `plugin/Views/`、`plugin/Services/` | C# `[JsService]`、AXAML 示例 |
 | `miokit-plugin-core` 的 `nuget.md` | `MioKit.Webview2` NuGet 依赖与加载边界 |
