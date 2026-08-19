@@ -2,6 +2,8 @@
 
 MioKit 的 Node.js MCP 服务。当前提供 `generate_guid` 工具，后续工具按同样方式挂到 `src/tools/`。
 
+规划中的 MCP 能力（创建插件、打包检查、与 skill 的分工）见 [`.cursor/docs/README.md`](.cursor/docs/README.md)。
+
 ## 要求
 
 - Node.js 20+
