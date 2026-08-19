@@ -1,6 +1,6 @@
 # MioKit MCP 文档
 
-本目录是 **miokit-mcp** 的能力规划：哪些工作由 MCP 执行，哪些继续留给 MioKit skill。本文只规划，不复制 skill 全文。
+本目录是 **MioKit.CodeAgent** 的能力规划：哪些工作由 [`mcp/`](../mcp/) 执行，哪些继续留给 [`skills/`](../skills/)。本文只规划，不复制 skill 全文。
 
 当前仓库已实现 **P0** 工具与配套 resource，见下表。P1–P3 仍是待实现清单，见 [mcp-capability-catalog.md](mcp-capability-catalog.md)。
 
@@ -12,7 +12,7 @@
 
 ## 分工
 
-本仓库是 **Node.js MCP**，给写插件的 Agent 调用硬能力。它**不连接**正在运行的 MioKit 宿主。
+`mcp/` 是 **Node.js MCP**，给写插件的 Agent 调用硬能力。它**不连接**正在运行的 MioKit 宿主。Skill 在 `skills/`，由 Agent 按主题阅读。
 
 | 放 MCP | 留 skill |
 |--------|----------|
@@ -20,7 +20,7 @@
 | 创建插件、打包、检查 nupkg 是否符合规范 | 主题文档全文（`references/*.md`） |
 | 结构化速查（schema、键名表、类型索引） | 「何时用 EAV / Memory / 搜索管线」这类判断 |
 
-Skill 仍是规范真源：
+Skill 仍是规范真源（[`skills/`](../skills/)）：
 
 - `miokit-plugin-new`：模板 shortName、CLI 参数语义、`pluginId` 形态、禁止手抄骨架
 - `miokit-plugin-development`：SDK 用法、生命周期、节点 / EAV / 搜索等主题文档
