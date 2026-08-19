@@ -1,12 +1,12 @@
 # MCP 能力清单
 
-每条写清：名称、形态、对应 skill 主题、Agent 何时该调、为何不适合只靠 skill。优先级 P0–P3。`generate_guid` 已实现，其余待实现。
+每条写清：名称、形态、对应 skill 主题、Agent 何时该调、为何不适合只靠 skill。优先级 P0–P3。P0 工具与 `miokit://plugin-json-schema` / `miokit://packaging-hints` 已实现；P1–P3 待实现。
 
 规范来自 skill 的**规则**（字段、布局、禁止项、CLI 参数语义），不把 skill 里的仓库脚本当成 MCP 依赖。
 
 ---
 
-## P0 — 创建 / 标识 / 打包检查
+## P0 — 创建 / 标识 / 打包检查（已实现）
 
 开发主路径。创建前必须先保证本机模板包可用且为 NuGet 来源的最新版。
 
@@ -49,7 +49,7 @@
 
 Agent 不要自己拼 `dotnet new` 命令。
 
-### `generate_guid`（已实现）
+### `generate_guid`
 
 | 项 | 内容 |
 |----|------|
@@ -206,8 +206,8 @@ skill 示例已够用，实现优先级低。
 
 | URI | 内容 | 来源 | 何时读 |
 |-----|------|------|--------|
-| `miokit://plugin-json-schema` | 最小有效清单 + 禁止字段 | `plugin-json.md` | 写或改 `plugin.json` |
-| `miokit://packaging-hints` | nupkg 不是 `lib/<TFM>/`、PackageId ≠ `plugin.json.id`、版本只走 NuGet SemVer、禁止三个旧字段、图标双路径 | `packaging.md`、`nuget.md` | pack / inspect 前后 |
+| `miokit://plugin-json-schema` | 最小有效清单 + 禁止字段（已实现） | `plugin-json.md` | 写或改 `plugin.json` |
+| `miokit://packaging-hints` | nupkg 不是 `lib/<TFM>/`、PackageId ≠ `plugin.json.id`、版本只走 NuGet SemVer、禁止三个旧字段、图标双路径（已实现） | `packaging.md`、`nuget.md` | pack / inspect 前后 |
 | `miokit://sdk-api-index` | 公开类型 → 主题文档 | `sdk-api-index.md` | 不确定 API 归属 |
 | `miokit://shadcn-resource-keys` | 已注册 `DynamicResource` 键（禁止发明键名） | `shadcn-theme.md` | 写 AXAML 主题 |
 | `miokit://icon-source-names` | `IconSource.*` 与 `*DataUrl` | `sdk-helpers.md` | 节点/WebView 图标 |

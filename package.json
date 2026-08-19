@@ -10,7 +10,8 @@
   "scripts": {
     "start": "tsx src/index.ts",
     "inspect": "npx @modelcontextprotocol/inspector npx tsx src/index.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test src/lib/plugin-id.test.ts src/lib/plugin-json.test.ts src/lib/nupkg-inspect.test.ts src/lib/templates.test.ts src/lib/pack-plugin.test.ts"
   },
   "keywords": [
     "mcp",
@@ -19,6 +20,7 @@
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/server": "^2.0.0",
+    "fflate": "^0.8.3",
     "tsx": "^4.23.12",
     "zod": "^4.4.3"
   },

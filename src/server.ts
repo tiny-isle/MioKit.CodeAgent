@@ -1,4 +1,5 @@
 import { McpServer } from '@modelcontextprotocol/server';
+import { registerResources } from './resources/index.js';
 import { registerTools } from './tools/index.js';
 
 export const SERVER_NAME = 'miokit-mcp';
@@ -11,5 +12,6 @@ export function createServer(): McpServer {
   });
 
   registerTools(server);
+  registerResources(server);
   return server;
 }

@@ -7,7 +7,7 @@ export function registerGenerateGuid(server: McpServer): void {
     'generate_guid',
     {
       description:
-        'Generate one or more RFC 4122 UUID v4 GUIDs. Use for unique IDs, keys, or filenames.',
+        'Generate RFC 4122 UUID v4 GUIDs for MioKit TypeId, EAV WithId, and other stable identifiers. Default uppercase with 8-4-4-4-12 hyphens to match C# Guid literals. Do not invent GUIDs by hand.',
       inputSchema: z.object({
         count: z
           .number()

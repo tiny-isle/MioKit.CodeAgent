@@ -2,7 +2,7 @@
 
 本目录是 **miokit-mcp** 的能力规划：哪些工作由 MCP 执行，哪些继续留给 MioKit skill。本文只规划，不复制 skill 全文。
 
-当前仓库已实现的工具只有 [`generate_guid`](../../src/tools/generate-guid.ts)。其余条目是待实现清单，见 [mcp-capability-catalog.md](mcp-capability-catalog.md)。
+当前仓库已实现 **P0** 工具与配套 resource，见下表。P1–P3 仍是待实现清单，见 [mcp-capability-catalog.md](mcp-capability-catalog.md)。
 
 ## 阅读顺序
 
@@ -61,4 +61,12 @@ Agent
 
 | 名称 | 形态 | 说明 |
 |------|------|------|
+| `ensure_plugin_templates` | tool | 从 NuGet 安装或更新 `MioKit.Plugin.Templates`；文件夹来源则失败 |
+| `suggest_plugin_id` | tool | `com.<org>.plugin.<slug>` |
+| `create_plugin` | tool | 先 ensure，再 `dotnet new`；已有 `plugin.json` 则拒绝覆盖 |
 | `generate_guid` | tool | RFC 4122 UUID v4。默认大写、带连字符，对齐 C# `Guid` 字面量（Const `TypeId`、EAV `WithId`） |
+| `validate_plugin_json` | tool | 必填 / 禁止字段与 `System.Version` |
+| `pack_plugin` | tool | `dotnet pack` 到 `artifacts/`；默认 inspect，有 errors 则失败 |
+| `inspect_plugin_nupkg` | tool | 解压检查 nupkg 根布局、宿主 DLL、图标、信封 |
+| `miokit://plugin-json-schema` | resource | 最小有效清单 + 禁止字段 |
+| `miokit://packaging-hints` | resource | 根布局、PackageId ≠ `plugin.json.id`、图标双路径 |
