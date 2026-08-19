@@ -180,5 +180,5 @@ xmlns:shad="https://github.com/tiny-isle/Ti.Avalonia.Shadcn"
 
 ## 9. 相关
 
-- WebView2 + Vue UI：[vue-bridge.md](vue-bridge.md)
-- NuGet（Sdk 捆绑 Shadcn 相关包）：[nuget.md](nuget.md) §3.1
+- WebView2 + Vue UI：`miokit-plugin-webview2`
+- NuGet（Sdk 捆绑 Shadcn 相关包）：`miokit-plugin-core` 的 `nuget.md`

@@ -1,0 +1,4 @@
+interface:
+  display_name: "MioKit WebView2 UI"
+  short_description: "MioKit WebView2 and Vue UI development"
+  default_prompt: "Use $miokit-plugin-webview2 for MioKit.Webview2, MioWebview2, JsService, Vue bridge, frontend builds, and WebView2 packaging."

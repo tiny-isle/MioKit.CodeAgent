@@ -23,7 +23,9 @@
 Skill 仍是规范真源（[`skills/`](../skills/)）：
 
 - `miokit-plugin-new`：模板 shortName、CLI 参数语义、`pluginId` 形态、禁止手抄骨架
-- `miokit-plugin-development`：SDK 用法、生命周期、节点 / EAV / 搜索等主题文档
+- `miokit-plugin-core`：SDK 用法、生命周期、节点 / EAV / 搜索 / 服务 / 打包等核心主题
+- `miokit-plugin-avalonia-ui`：Avalonia、AXAML、Shadcn 主题、Dialog 和 Preview
+- `miokit-plugin-webview2`：WebView2、JsService、Vue bridge 和前端打包
 
 Agent **读** skill 做选型；**调** MCP 做创建、生成 GUID、校验清单、打包，并确认产物符合规范。打好的 `.nupkg` 如何上传由用户自己决定，MCP 不推源。
 

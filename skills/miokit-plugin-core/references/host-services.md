@@ -8,7 +8,7 @@
 |---|---|---|
 | 数据库存取 | `IMioDataProvider` | 节点查询、`StoreAsync`、批量预加载；搜索热路径禁止逐条异步读取。 |
 | 搜索匹配 | `ITextMatcher` | 常规节点搜索优先 `SearchHelper.TryMatch`；仅自定义字段匹配时直接使用。 |
-| 搜索框 UI | `ISearchBoxWindow` | 对话框使用 `TryShowDialogAsync`，见 [search-box-dialog.md](search-box-dialog.md)。 |
+| 搜索框 UI | `ISearchBoxWindow` | 对话框使用 `TryShowDialogAsync`；Avalonia Dialog 约定见 `miokit-plugin-avalonia-ui`。 |
 | 搜索框焦点 | `IFocusRequestService` | 请求焦点，不要直接操纵宿主窗口控件。 |
 | 图标资产 | `IPluginContext.Icons` | 所有者绑定的读写入口；`OpenFileAsync` / `OpenStoredAsync` / `OpenRemoteAsync` 返回有生命周期的 lease，插件不能重建全库或修改其他插件记录。 |
 | 系统图片 | `IImageService` | 需要从宿主存储项取得图标时使用。 |
@@ -53,7 +53,7 @@ if (MioIoc.TryResolve<ILocalWebhostClient>(out var webhost) && webhost is not nu
 
 ## 可选本地 Web 服务
 
-`ILocalWebhostClient` 用于可选的本地站点生命周期与状态查询。它不是所有宿主环境都保证提供的服务，因此必须 `TryResolve` / `IsRegistered` 后再用。它不替代 WebView2 的 `MioWebview2` 与 `[JsService]`；后者见 [vue-bridge.md](vue-bridge.md)。
+`ILocalWebhostClient` 用于可选的本地站点生命周期与状态查询。它不是所有宿主环境都保证提供的服务，因此必须 `TryResolve` / `IsRegistered` 后再用。它不替代 WebView2 的 `MioWebview2` 与 `[JsService]`；后者见 `miokit-plugin-webview2`。
 
 ## 检查清单
 

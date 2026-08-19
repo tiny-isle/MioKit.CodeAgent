@@ -1,6 +1,6 @@
 # NuGet 依赖参考
 
-插件与宿主共享运行时依赖。**包版本以生成项目 `*.csproj` 中的 `PackageReference` 为准**；需要手动选择第三方包版本时，先查 [host-nuget-versions.md](host-nuget-versions.md)。
+插件与宿主共享运行时依赖。**包版本以生成项目 `*.csproj` 中的 `PackageReference` 为准**；需要选择第三方包版本时，以模板生成的项目和当前宿主兼容约定为准，不要臆造版本表。
 
 ---
 
@@ -30,7 +30,7 @@
 |------|---------------|
 | **插件必需** | `MioKit.Sdk`、`MioKit.SourceGenerate` |
 | **WebView2** | + `MioKit.Webview2` |
-| **直接使用到的第三方 API** | 与 [host-nuget-versions.md](host-nuget-versions.md) 或 csproj 中已有条目**同版本** `PackageReference`（仅编译） |
+| **直接使用到的第三方 API** | 与模板/csproj 中已有条目**同版本** `PackageReference`（仅编译） |
 | **插件发布包** | `dotnet pack` 的 `PackageId` / `PackageVersion`；完整流程见 [packaging.md](packaging.md) |
 | **插件私有包** | csproj + `plugin.json` → `nugetDependents` |
 
@@ -46,7 +46,7 @@
 | `MioKit.SourceGenerate` | EAV/Memory 源生成（`PrivateAssets=all`） |
 | `MioKit.Webview2` | 按需：WebView2 + JS 桥接 |
 
-当前模板与宿主对齐版本见 [host-nuget-versions.md](host-nuget-versions.md)。不要将该清单里的包全部加到插件项目；只有插件代码直接引用某个包的 API 时才添加。
+以当前模板和宿主兼容约定为准。不要将模板中的所有包都加到插件项目；只有插件代码直接引用某个包的 API 时才添加。
 
 ---
 
@@ -132,7 +132,7 @@ Sdk 与 Host **均未提供** 的新包：
 </None>
 ```
 
-按需添加 `MioKit.Webview2` 及代码直接引用的第三方包（版本与模板/csproj/[host-nuget-versions.md](host-nuget-versions.md) 对齐）。
+按需添加 `MioKit.Webview2` 及代码直接引用的第三方包（版本与模板/csproj 对齐）。WebView2 的 UI 与前端构建规则见 `miokit-plugin-webview2`。
 
 ---
 
@@ -152,5 +152,5 @@ Sdk 与 Host **均未提供** 的新包：
 - [plugin-json.md](plugin-json.md) — 清单字段与 `nugetDependents`
 - [packaging.md](packaging.md) — nupkg 内容、验证与发布
 - [plugin-core.md](plugin-core.md) — Register 与 DI
-- [host-nuget-versions.md](host-nuget-versions.md) — 宿主与模板对齐的 NuGet 版本
+- `miokit-plugin-webview2` — WebView2 包和前端构建约定
 - [sdk-helpers.md](sdk-helpers.md) — 宿主可 Resolve 服务、反模式

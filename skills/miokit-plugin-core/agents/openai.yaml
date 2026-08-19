@@ -1,0 +1,4 @@
+interface:
+  display_name: "MioKit Plugin Core"
+  short_description: "Core MioKit plugin development patterns"
+  default_prompt: "Use $miokit-plugin-core for lifecycle, SDK, nodes, search, services, dependencies, and packaging in an existing MioKit plugin."

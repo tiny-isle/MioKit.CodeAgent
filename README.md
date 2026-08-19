@@ -20,13 +20,17 @@ npx skills add tiny-isle/MioKit.CodeAgent
 
 ```bash
 npx skills add tiny-isle/MioKit.CodeAgent --skill miokit-plugin-new
-npx skills add tiny-isle/MioKit.CodeAgent --skill miokit-plugin-development
+npx skills add tiny-isle/MioKit.CodeAgent --skill miokit-plugin-core
+npx skills add tiny-isle/MioKit.CodeAgent --skill miokit-plugin-avalonia-ui
+npx skills add tiny-isle/MioKit.CodeAgent --skill miokit-plugin-webview2
 ```
 
 | Skill | 何时用 |
 |-------|--------|
 | `miokit-plugin-new` | 尚无插件解决方案，要新建 |
-| `miokit-plugin-development` | 已有 `plugin/`，写 SDK / 节点 / 打包 |
+| `miokit-plugin-core` | 已有 `plugin/`，写 SDK / 节点 / 搜索 / 服务 / 打包 |
+| `miokit-plugin-avalonia-ui` | `.axaml`、Avalonia、Shadcn 主题、Dialog、Preview |
+| `miokit-plugin-webview2` | `MioWebview2`、`JsService`、Vue、`vue-ui`、前端打包 |
 
 `npx skills add` **不会**安装 MCP。
 

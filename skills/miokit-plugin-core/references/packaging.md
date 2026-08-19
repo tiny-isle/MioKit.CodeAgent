@@ -35,7 +35,7 @@ Agent 调 MCP `pack_plugin`：
 
 ## 3. 把资源放进包和运行输出
 
-模板默认保证 DLL 与 `plugin.json`。图标、配置文件、数据库种子、WebView2 前端产物等额外文件必须同时复制到构建输出并标记为 Pack；路径应和代码/`plugin.json` 中使用的相对路径一致。
+模板默认保证 DLL 与 `plugin.json`。图标、配置文件、数据库种子等额外文件必须同时复制到构建输出并标记为 Pack；路径应和代码/`plugin.json` 中使用的相对路径一致。WebView2 前端产物的专用规则见 `miokit-plugin-webview2`。
 
 图标同时承担两个角色：`plugin.json.icon` 是安装后的运行时路径，NuGet nuspec 的 `icon`（MSBuild `PackageIcon`）用于生成目录 `iconUrl`。当前模板会从 `plugin.json.icon` 动态设置 `PackageIcon`；仅把图片 Pack 进包但缺少该元数据时，商店列表仍不会显示图标。自定义或旧版 csproj 应补充等值配置：
 
@@ -62,8 +62,6 @@ Agent 调 MCP `pack_plugin`：
 </ItemGroup>
 ```
 
-WebView2 模板会把存在的 `ui/dist/**` 复制到构建输出；在打包前先完成前端构建。若项目将前端目录改为其他位置，必须为该目录补充等价的 `CopyToOutputDirectory` 与 `Pack` 配置。
-
 不要把 `MioKit.Sdk.dll`、`MioKit.SourceGenerate.dll`、`MioKit.Webview2.dll` 或宿主已有共享库手动塞进包；加载时必须复用宿主程序集。私有第三方依赖的声明见 [nuget.md](nuget.md)。
 
 SDK 1.0 的卸载清理由插件入口类返回声明式 `PluginDataCleanupPlan`。`plugin.json` 没有 cleanup DLL 字段，包内也不得增加独立卸载 DLL、卸载脚本或 SQL；模板只打包入口 DLL 与运行资源。
@@ -75,7 +73,7 @@ SDK 1.0 的卸载清理由插件入口类返回声明式 `PluginDataCleanupPlan`
 - 根目录有 `plugin.json` 与 `assembly` 指向的 DLL。
 - `plugin.json` 可被 JSON 解析，且 `id`、`name`、`assembly`、`metadataVersion`、`minSdkVersion` 非空。
 - `icon` 与其他声明的相对资源在包内实际存在；nuspec `icon` 与 `plugin.json.icon` 路径完全一致。
-- WebView2 插件包含已构建的前端静态资源。
+- 采用 UI Skill 的插件已按对应 Skill 检查其静态资源。
 - 包内没有 `MioKit.Sdk.dll` 等宿主共享 DLL。
 
 hints 对应开发修复，例如：图标同时 CopyToOutputDirectory + Pack，且 `PackageIcon` 与 `plugin.json.icon` 同路径。结构化约定见 MCP resource `miokit://packaging-hints`。
@@ -92,7 +90,7 @@ hints 对应开发修复，例如：图标同时 CopyToOutputDirectory + Pack，
 - [ ] `plugin.json` 与 DLL 文件名、插件 `PluginId`、`Keyed<IPlugin>` 一致
 - [ ] `PackageId` / `PackageVersion` 已明确且版本递增
 - [ ] 清单不含三个旧发布字段，nuspec description 是 `miokit.plugin-package` v1 JSON 信封
-- [ ] 图标、静态资源、WebView2 前端产物已经同时复制和 Pack；NuGet `PackageIcon` 与 `plugin.json.icon` 一致
+- [ ] 图标和通用静态资源已经同时复制和 Pack；NuGet `PackageIcon` 与 `plugin.json.icon` 一致
 - [ ] 已检查 nupkg 根目录并排除宿主共享 DLL
 - [ ] 未打包独立卸载 DLL / 脚本 / SQL；额外持久化 EAV 根已通过 `PluginDataCleanupPlan` 声明
 - [ ] 已在目标宿主版本上安装验证后再发布

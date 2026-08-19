@@ -16,13 +16,13 @@ MCP 取代的是 **Agent 自己执行创建 / 打包 / 验包**。skill 文中�
 | `pluginId` 形态 `com.<org>.plugin.<slug>` | `suggest_plugin_id` | 创建前生成；`create_plugin` 可复用 |
 | 禁止手抄骨架；禁止本地文件夹 `dotnet new install` | 约束写入上述 tools | 输出目录已有 `plugin.json` 则拒绝覆盖 |
 | `-n` 派生命名、模板 shortName 选型 | **留 skill** | 判断用哪套模板、如何起解决方案名 |
-| 创建后读 development skill、补节点 | **留 skill** | 模板不预置搜索组 / 可执行节点 |
+| 创建后读 `miokit-plugin-core`、按需加载 UI Skill、补节点 | **留 skill** | 模板不预置搜索组 / 可执行节点 |
 
 Agent 不要自己拼 `dotnet new`。工作区尚无插件时：先 `check_dev_environment`，再调 `create_plugin`，不要改去手写 `plugin/`。
 
 ---
 
-## `miokit-plugin-development`
+## `miokit-plugin-core`
 
 ### plugin-json.md
 
@@ -71,21 +71,21 @@ Agent 不要自己拼 `dotnet new`。工作区尚无插件时：先 `check_dev_e
 | 类型 / 关键词 → 主题文档 | `lookup_sdk_api`；resource `miokit://sdk-api-index` |
 | 「未列出的成员不要猜」 | **留 skill** |
 
-### vue-bridge.md
+### `miokit-plugin-webview2` / `vue-bridge.md`
 
 | Skill 内容 | MCP |
 |------------|-----|
 | `[JsService]` 允许 / 禁止的公开成员（§4.0） | `get_js_service_constraints` |
 | Vue 工程结构、组合式 API、主题与页面写法 | **留 skill** |
 
-### shadcn-theme.md
+### `miokit-plugin-avalonia-ui` / `shadcn-theme.md`
 
 | Skill 内容 | MCP |
 |------------|-----|
 | 已注册 `DynamicResource` 键 | resource `miokit://shadcn-resource-keys` |
 | 何时用 Brush vs Color、控件用法、禁止硬编码颜色 | **留 skill** |
 
-### sdk-helpers.md
+### `miokit-plugin-core` / `sdk-helpers.md`
 
 | Skill 内容 | MCP |
 |------------|-----|
@@ -93,23 +93,23 @@ Agent 不要自己拼 `dotnet new`。工作区尚无插件时：先 `check_dev_e
 | `IconSource.*` / `*DataUrl` | resource `miokit://icon-source-names` |
 | Shell、窗口、lease 生命周期叙事 | **留 skill** |
 
-### host-services.md
+### `miokit-plugin-core` / `host-services.md`
 
 | Skill 内容 | MCP |
 |------------|-----|
 | 需求 → `MioIoc.Resolve` / `Context.Icons` / `TryResolve` | resource `miokit://host-services` |
 | 事件总线何时用、处理器要尽快返回 | **留 skill** |
 
-### nodes-and-tree.md / features.md
+### `miokit-plugin-core` / nodes-and-tree.md / features.md
 
 | Skill 内容 | MCP |
 |------------|-----|
 | 组 / 节点类骨架 | P3 `generate_node_snippet` |
 | 挂树语义、`EnsureTreeLoadedAsync`、Feature 组合、勿手写递归 | **留 skill** |
 
-### search.md / attach-search-panel.md / search-box-dialog.md / result-action.md / invocation-snapshot.md / input-hooks.md
+### `miokit-plugin-core` / search.md / attach-search-panel.md / result-action.md / invocation-snapshot.md / input-hooks.md
 
-全部 **留 skill**（管线、交互设计、热键实现）。不做成 MCP tool 或把全文挂成 resource。
+全部 **留 skill**（管线、交互设计、热键实现）。`search-box-dialog.md` 随 `miokit-plugin-avalonia-ui` 管理；这些内容不做成 MCP tool 或把全文挂成 resource。
 
 ---
 

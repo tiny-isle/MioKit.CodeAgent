@@ -195,28 +195,14 @@ WebView.Source = new Uri("http://localhost:5173");
 
 `MioWebview2` 设置 WebView2 `PreferredColorScheme`；Vue 侧通过 `window.setColorTheme(payload)` 同步 Avalonia `ShadColorTheme` 色板（实现于模板 `src/lib/colorTheme.js`）。详见 `vue-ui/.agents/skills/miokit-ui-template/SKILL.md`。
 
-Avalonia 壳层 AXAML 主题见 [shadcn-theme.md](shadcn-theme.md)。
+Avalonia 壳层 AXAML 主题见 `miokit-plugin-avalonia-ui`。
 
 ---
 
 ## 5. 打包与输出
 
-插件 csproj 将 Vue 构建产物复制到输出：
-
-```xml
-<ItemGroup>
-  <Content Include="ui\dist\**">
-    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-  </Content>
-</ItemGroup>
-```
-
-```bash
-cd plugin/vue-ui
-pnpm build
-```
-
-模板 Vite 已配置 `base: './'` 与 `outDir: ../ui/dist`，虚拟主机下资源路径正确。
+前端构建、`ui/dist` 输出目录、csproj 的 `CopyToOutputDirectory` / `Pack` 配置和发布检查
+见 [webview2-packaging.md](webview2-packaging.md)。
 
 ---
 
@@ -347,4 +333,4 @@ C# 开发时 `WebView.Source = http://localhost:5173`；发布时加载 `ui/dist
 | [miokit-ui-template](https://github.com/MioKit-Teams/miokit-ui-template) | 官方 Vue 前端模板（WebView2 模板内置为 `plugin/vue-ui/`） |
 | `plugin/vue-ui/.agents/skills/miokit-ui-template/SKILL.md` | 模板内 UI / 主题 / 组件规范 |
 | 生成项目 `plugin/Views/`、`plugin/Services/` | C# `[JsService]`、AXAML 示例 |
-| [nuget.md](nuget.md) | `MioKit.Webview2` NuGet 版本 |
+| `miokit-plugin-core` 的 `nuget.md` | `MioKit.Webview2` NuGet 依赖与加载边界 |

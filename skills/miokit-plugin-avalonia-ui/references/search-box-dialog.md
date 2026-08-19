@@ -65,7 +65,7 @@ public sealed class EditAliasAction : SearchResultActionBase
 }
 ```
 
-推荐从 `IResultActionProviderFeature.GetActionAsync` 返回 action，让用户按 Alt 打开操作弹层后执行 Dialog。Action 规范见 [result-action.md](result-action.md)。
+推荐从核心 Skill 的 `IResultActionProviderFeature.GetActionAsync` 返回 action，让用户按 Alt 打开操作弹层后执行 Dialog。Action 规范见 `miokit-plugin-core` 的 `result-action.md`。
 
 ---
 

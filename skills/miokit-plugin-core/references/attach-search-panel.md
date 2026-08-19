@@ -119,7 +119,7 @@ public interface ISearchScopeFeature : IAttachPanelSearchFeature, IInvokeFeature
 
 `SearchCommandValidation.TryNormalize(raw, out normalized)`：仅接受 `^[a-z]+(?:[-_][a-z]+)*$`；首尾/连续分隔符、大写、数字或空白均返回 `false`。
 
-`ISearchBoxWindow`（`MioIoc.Resolve`）：`SetAttachedPanelAsync` · `ShowWindowAsync` / `HideWindowAsync` / `ToggleWindowAsync` / `RefreshAsync` · 内容宿主与 Dialog 见下文和 [search-box-dialog.md](search-box-dialog.md)。
+`ISearchBoxWindow`（`MioIoc.Resolve`）：`SetAttachedPanelAsync` · `ShowWindowAsync` / `HideWindowAsync` / `ToggleWindowAsync` / `RefreshAsync` · 内容宿主与 Avalonia Dialog 见 `miokit-plugin-avalonia-ui`。
 
 ---
 

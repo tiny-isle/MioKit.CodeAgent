@@ -12,11 +12,11 @@
 | 作用域/命令式搜索 | `IAttachPanelFeature`、`IAttachPanelSearchFeature`、`ISearchScopeFeature`、`SearchScopeFeatureBase` | [attach-search-panel.md](attach-search-panel.md) |
 | 执行环境 | `InvokeContext`、`InvocationSnapshot`、`IInvocationSnapshotProvider` | [invocation-snapshot.md](invocation-snapshot.md) |
 | 结果附加操作 | `IResultActionProviderFeature`、`ISearchResultAction`、`SearchResultActionBase` | [result-action.md](result-action.md) |
-| 搜索框内编辑 UI | `ISearchBoxWindow`、`IDialogContext`、`DialogResult` | [search-box-dialog.md](search-box-dialog.md) |
+| 搜索框内编辑 UI | `ISearchBoxWindow`、`IDialogContext`、`DialogResult` | `miokit-plugin-avalonia-ui` |
 | 热键与输入 Hook | `IHotkeyFeature`、`IGlobalHotKeyService`、`IKeyboardInputHandler`、`IMouseInputHandler` | [input-hooks.md](input-hooks.md) |
-| 图标、文件和 Avalonia 窗口 | `IconRequest`、`IIconLease`、`IconLease`、`IIconProviderFeature`、`IIconService`、`IconSource`、`ShellHelper`、`WindowManager`、`PluginWindowExtensions.SetPluginIcon` | [sdk-helpers.md](sdk-helpers.md) |
+| 图标、文件和窗口 | `IconRequest`、`IIconLease`、`IconLease`、`IIconProviderFeature`、`IIconService`、`IconSource`、`ShellHelper`、`WindowManager`、`PluginWindowExtensions.SetPluginIcon` | [sdk-helpers.md](sdk-helpers.md)；Avalonia 控件见 `miokit-plugin-avalonia-ui` |
 | 宿主服务和事件 | `IMioEventBus`、`IImageService`、`IFocusRequestService`、`ILocalWebhostClient` | [host-services.md](host-services.md) |
-| WebView2 + Vue | `MioWebview2`、`[JsService]`、`ServiceBridge` | [vue-bridge.md](vue-bridge.md) |
+| WebView2 + Vue | `MioWebview2`、`[JsService]`、`ServiceBridge` | `miokit-plugin-webview2` |
 | 打包与依赖 | `plugin.json`、MSBuild `Pack` 项、MCP `pack_plugin` / `inspect_plugin_nupkg`（不 push） | [packaging.md](packaging.md)、[nuget.md](nuget.md) |
 
 ## 使用规则
