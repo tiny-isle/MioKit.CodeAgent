@@ -1,6 +1,6 @@
 # miokit-mcp
 
-MioKit 的 Node.js MCP 服务。P0 工具覆盖开发环境检查、插件创建、标识、`plugin.json` 校验、打包与验包；P1 及之后的能力见 [docs/README.md](../docs/README.md)。
+MioKit 的 Node.js MCP 服务。工具覆盖开发环境检查、插件创建、标识、`plugin.json` 校验、打包与验包。代码骨架（Const / EAV builder / 节点类）不进 MCP，由 Agent 按 skill 示例写；新 Guid 只调 `generate_guid`。
 
 ## 要求
 
@@ -39,7 +39,7 @@ npm run inspect
 | `ensure_plugin_templates` | 从 NuGet 检查 / 安装 / 更新 `MioKit.Plugin.Templates`；拒绝本地文件夹安装 |
 | `suggest_plugin_id` | 生成 `com.<org>.plugin.<slug>` |
 | `create_plugin` | 先环境检查，再 ensure，再 `dotnet new miokit-plugin` / `miokit-plugin-webview2` |
-| `generate_guid` | TypeId / EAV `WithId` 等稳定 GUID |
+| `generate_guid` | TypeId / EAV `WithId` 等稳定 GUID；写入 `XxxConst` 的 `const string` |
 | `validate_plugin_json` | 必填字段、禁止旧发布字段、`System.Version` |
 | `pack_plugin` | `dotnet pack` 到 `artifacts/`；先环境检查，默认接着 inspect |
 | `inspect_plugin_nupkg` | 解压检查 nupkg 是否符合插件包规范 |

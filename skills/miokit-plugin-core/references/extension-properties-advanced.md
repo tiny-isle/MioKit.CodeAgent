@@ -104,7 +104,7 @@ public static partial class MyExtension
     [EavRelation(typeof(IMyFeature))]
     public static EavProperty<string> PathProperty { get; } =
         EavPropertyBuilder<string>.Create()
-            .WithId(Guid.Parse("..."))
+            .WithId(MyPluginConst.PathPropertyGuid)
             .WithName("Path")
             .WithPolicy(EavCachePolicy.Absolute)
             .WithStoreType(MioStoreType.String)
@@ -123,6 +123,17 @@ var path = await this.GetPathAsync();
 需要在宿主「插件功能设置 → 配置」中自动生成可编辑表单项时，使用 `SettingEavProperty<T>`（继承 `EavProperty<T>`），且 **`[EavRelation]` 只能映射到 `IPluginFeature` 派生接口**（源生成器诊断 `MIOKIT001`）。`IPlugin` / 插件根本身就是 `IPluginFeature`，可直接挂插件级配置。
 
 ```csharp
+public static class MyPluginConst
+{
+    // 与 Type 相同成对。示例 Guid 勿抄；真实插件先 generate_guid 再填 const string。
+    public const string MaxItemsPropertyId = "B8D41E06-2C9A-4F71-8E3B-5A17C0D94E62";
+    public static readonly Guid MaxItemsPropertyGuid = Guid.Parse(MaxItemsPropertyId);
+    public const string ScanDirectoriesPropertyId = "3C5E7A91-8B24-4D06-A1F0-9E6B2C48D735";
+    public static readonly Guid ScanDirectoriesPropertyGuid = Guid.Parse(ScanDirectoriesPropertyId);
+    public const string ModePropertyId = "E2F09B47-1A53-4C8D-B6E4-0D7A83F15C29";
+    public static readonly Guid ModePropertyGuid = Guid.Parse(ModePropertyId);
+}
+
 public interface IMyPluginFeature : IPluginFeature;
 
 public static partial class MyPluginExtension
@@ -130,7 +141,7 @@ public static partial class MyPluginExtension
     [EavRelation(typeof(IMyPluginFeature))]
     public static SettingEavProperty<int?> MaxItemsProperty { get; } =
         SettingEavPropertyBuilder<int?>.Create()
-            .WithId(Guid.Parse("新 GUID"))
+            .WithId(MyPluginConst.MaxItemsPropertyGuid)
             .WithName("MaxItems")
             .WithDisplayName("最大条目数")
             .WithDescription("超过该数量时忽略新结果")
@@ -143,7 +154,7 @@ public static partial class MyPluginExtension
     [EavRelation(typeof(IMyPluginFeature))]
     public static SettingEavProperty<List<string>> ScanDirectoriesProperty { get; } =
         SettingEavPropertyBuilder<List<string>>.Create()
-            .WithId(Guid.Parse("新 GUID"))
+            .WithId(MyPluginConst.ScanDirectoriesPropertyGuid)
             .WithName("ScanDirectories")
             .WithDisplayName("扫描目录")
             .WithEditor(SettingEditorKind.StringList)
@@ -154,7 +165,7 @@ public static partial class MyPluginExtension
     [EavRelation(typeof(IMyPluginFeature))]
     public static SettingEavProperty<MyMode?> ModeProperty { get; } =
         SettingEavPropertyBuilder<MyMode?>.Create()
-            .WithId(Guid.Parse("新 GUID"))
+            .WithId(MyPluginConst.ModePropertyGuid)
             .WithName("Mode")
             .WithDisplayName("模式")
             .WithEditor(SettingEditorKind.Enum)
@@ -217,7 +228,7 @@ node.SetValue(MyExtension.PathProperty, value);
 
 ## 6. 检查清单
 
-- [ ] `Features/IMyFeature.cs` + `Features/IMyFeature.Extensions.cs`；`partial` 扩展类 + `Property` 后缀 + 新 EAV Guid
+- [ ] `Features/IMyFeature.cs` + `Features/IMyFeature.Extensions.cs`；`partial` 扩展类 + `Property` 后缀；EAV `WithId` 用 Const 成对 Guid（`generate_guid` 填 `const string`，禁止内联字面量）
 - [ ] 持久化字段用 `EavProperty`；仅运行时缓存用 `MemoryProperty`
 - [ ] 内存节点上确需跨重启的偏好使用 `.WithForcePersistence()`，并加入 `PreloadPropertySource`
 - [ ] 搜索字段 `Absolute` + `PreloadPropertySource`（构造器内 `[..PreloadPropertySource, MyProperty]`）/ `BatchLoadValueAsync`

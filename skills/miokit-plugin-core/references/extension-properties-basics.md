@@ -38,7 +38,7 @@ using MioKit.Sdk;
 | 字段名 | 以 `Property` 结尾，如 `PathProperty` → 生成 `GetPath` / `SetPath` |
 | EAV | `[EavRelation(typeof(IFeature))]` + `EavPropertyBuilder<T>.Create()...Build()` |
 | Memory | `[MemoryRelation(typeof(IFeature))]` + `MemoryPropertyBuilder<T>.Create()...Build()` |
-| Guid | 每个 EAV `WithId` **全局唯一**；插件发布后不可改 |
+| Guid | 每个 EAV / SettingEav `WithId` **全局唯一**，发布后不可改。身份放进 `XxxConst`：`const string XxxPropertyId` + `static readonly Guid XxxPropertyGuid = Guid.Parse(XxxPropertyId)`。`.WithId(XxxConst.XxxPropertyGuid)`；禁止 `Guid.Parse("……")`。新值先调 MCP `generate_guid` 填 `const string`。Memory 不要 `WithId` |
 | 多 Feature | 同一属性可 `[EavRelation(typeof(IA), typeof(IB))]`（少见） |
 | 文档 | 新增属性同步 `docs/features-and-properties.md` |
 
@@ -50,7 +50,7 @@ public static partial class MyExtension
     [EavRelation(typeof(IMyNodeFeature))]
     public static EavProperty<string> PathProperty { get; } =
         EavPropertyBuilder<string>.Create()
-            .WithId(Guid.Parse("新 GUID"))
+            .WithId(MyPluginConst.PathPropertyGuid)
             .WithName("Path")
             .WithPolicy(EavCachePolicy.Absolute)
             .WithStoreType(MioStoreType.String)
@@ -72,7 +72,7 @@ Memory 适合轻量运行时状态。解码图片应由 `IIconLease` 管理，�
 
 | 方法 | 说明 |
 |------|------|
-| `WithId(Guid)` | **必填**；对应库表属性主键 |
+| `WithId(Guid)` | **必填**（EAV / SettingEav）；引用 `XxxConst.XxxPropertyGuid`，禁止内联字面量 |
 | `WithName(string)` | 逻辑名 |
 | `WithPolicy(EavCachePolicy)` | 缓存策略（见 [扩展属性高级用法](extension-properties-advanced.md) §1） |
 | `WithStoreType(MioStoreType)` | 库列类型映射 |

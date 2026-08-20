@@ -4,15 +4,17 @@ Const、Register、IoC 边界、`PluginBase` 管道与可解析宿主服务，�
 
 ## Const 常量
 
-所有固定标识集中在 `XxxConst`，**禁止 magic string / magic Guid**。
+所有固定标识集中在 `XxxConst`，**禁止 magic string / magic Guid**。Guid 身份必须成对：`const string` 是不可变真源，`Guid` 成员**只能** `Guid.Parse` 该字符串。需要 string 的地方（如 `[EavType]`）引用 `XxxTypeId`；需要 Guid 的地方（如 `override Guid MioType`、EAV `WithId`）引用成对的 Guid 成员。
+
+新增 Type / EAV 身份时先调 MCP `generate_guid`（大写、带连字符），把结果填进 `const string`。禁止 `Guid.Parse("……")` 内联字面量，禁止只写 Guid、不写字符串同伴。不要手写 Guid，不要复用本文示例里的 Guid。已发布的不可改。
 
 | 类型 | 用途 |
 |------|------|
 | `PluginId` | plugin.json `id` |
-| `XxxTypeId` | Guid **字符串** → `[EavType(XxxTypeId)]` |
-| `XxxType` | `Guid.Parse(XxxTypeId)` → `override Guid MioType` |
-| `XxxGroupId` 等 | 固定 **string** 实例 Id → `EnsureTreeLoadedAsync` / 首次 `StoreAsync` |
-| EavProperty `WithId` | 新 Guid，发布后不可改 |
+| `XxxTypeId` | Guid **字符串**，不可变真源 → `[EavType(XxxTypeId)]` |
+| `XxxType` | **只能** `Guid.Parse(XxxTypeId)` → `override Guid MioType` |
+| `XxxPropertyId` / `XxxPropertyGuid` | EAV / SettingEav `WithId` 的身份，同样成对；Guid 侧用 `XxxPropertyGuid`，避免与扩展类字段 `PathProperty` 撞名 |
+| `XxxGroupId` 等 | 固定 **string** 实例 Id（如 `"desktop-app-search-group"`），**不是** Guid → `EnsureTreeLoadedAsync` / 首次 `StoreAsync` |
 
 ```csharp
 using MioKit.Sdk;
@@ -29,6 +31,9 @@ public static class MyPluginConst
 
     public const string DesktopAppNodeTypeId = "DAC0912A-4CD1-4601-87C5-EE52281F56F4";
     public static readonly Guid DesktopAppNodeType = Guid.Parse(DesktopAppNodeTypeId);
+
+    public const string PathPropertyId = "7F3A9C21-4E18-4B6D-9A02-1C8E5D7B4F30";
+    public static readonly Guid PathPropertyGuid = Guid.Parse(PathPropertyId);
 
     public const string DesktopAppSearchGroupId = "desktop-app-search-group";
 }
@@ -233,7 +238,7 @@ builder.RegisterType<MyLifecycleWorker>()
 
 `PluginExtension.IsEnabledProperty` 默认 `true`；Initialize 后 `await GetIsEnabledAsync() == false` 则宿主跳过 `StartAsync`。
 
-> 模板生成的 `*Const` 仅含 `PluginId` / `PluginType`；搜索组、节点、作用域等 Guid 由开发者按业务添加（见上例 `DesktopApp*`）。
+> 模板生成的 `*Const` 仅含 `PluginId` / `PluginType`；搜索组、节点、EAV `WithId` 等身份由开发者按业务添加（见上例 `DesktopApp*`、`PathPropertyId`），一律 `const string` + `Guid.Parse` 成对。`GroupId` 不是 Guid。
 
 ### PluginBase 成员速查
 
