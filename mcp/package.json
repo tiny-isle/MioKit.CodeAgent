@@ -1,6 +1,6 @@
 {
   "name": "@tiny-isle/miokit-mcp",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "MioKit MCP server — tools for MioKit workflows",
   "type": "module",
   "bin": {
