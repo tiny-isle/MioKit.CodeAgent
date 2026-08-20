@@ -34,7 +34,7 @@ description: >-
 4. 未提供 `pluginId` 时，可先调用 `suggest_plugin_id`，再将结果传给 `create_plugin`。
 5. 创建完成后，转入 `miokit-plugin-core` 继续实现核心功能；Avalonia 或 WebView2 UI 按需加载对应 Skill。
 
-`create_plugin` 会负责模板准备和项目生成。Agent 不要自行执行 `dotnet new install`、`dotnet new`，也不要从本地文件夹安装模板。
+`create_plugin` 会从 nuget.org 检查 / 安装 / 更新 `MioKit.Plugin.Templates`，再生成项目。Agent 不要自行执行 `dotnet new install`、`dotnet new`，也不要从本地文件夹、本地 nupkg 或私有 NuGet 源安装模板。
 
 ## 行为约束
 

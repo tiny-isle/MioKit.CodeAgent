@@ -2,6 +2,8 @@
 
 插件与宿主共享运行时依赖。**包版本以生成项目 `*.csproj` 中的 `PackageReference` 为准**；需要选择第三方包版本时，以模板生成的项目和当前宿主兼容约定为准，不要臆造版本表。
 
+开发依赖已发布到公共 [nuget.org](https://www.nuget.org/)：`MioKit.Sdk`、`MioKit.Extensions`、`MioKit.SourceGenerate`、`MioKit.Webview2`、`Ti.Avalonia.Shadcn`，以及模板包 `MioKit.Plugin.Templates`。还原、安装模板和解析传递依赖默认走 nuget.org。不要添加私有 NuGet 源、项目级 `nuget.config`、本地 nupkg 目录，也不要从本地文件夹安装模板；用户明确指定其他源时除外。
+
 ---
 
 ## 1. 分层概览
@@ -28,11 +30,11 @@
 
 | 层级 | csproj 应引用 |
 |------|---------------|
-| **插件必需** | `MioKit.Sdk`、`MioKit.SourceGenerate` |
+| **插件必需** | `MioKit.Extensions`、`MioKit.SourceGenerate`（`MioKit.Sdk` / `Ti.Avalonia.Shadcn` 由 Extensions 传递引入） |
 | **WebView2** | + `MioKit.Webview2` |
 | **直接使用到的第三方 API** | 与模板/csproj 中已有条目**同版本** `PackageReference`（仅编译） |
 | **插件发布包** | `dotnet pack` 的 `PackageId` / `PackageVersion`；完整流程见 [packaging.md](packaging.md) |
-| **插件私有包** | csproj + `plugin.json` → `nugetDependents` |
+| **插件私有依赖** | 宿主未提供的第三方包：csproj + `plugin.json` → `nugetDependents`（与包是否在 nuget.org 无关） |
 
 目标框架与 csproj 一致，通常为 `net10.0-windows10.0.19041.0`。
 
@@ -40,9 +42,12 @@
 
 ## 2. 插件必需包
 
+这些包都在 nuget.org，版本与模板 csproj 对齐，不要手写源或版本表。
+
 | 包 | 说明 |
 |----|------|
-| `MioKit.Sdk` | PluginBase、MioObject、IFeature、EAV、搜索类型 |
+| `MioKit.Extensions` | 插件 csproj 的直接引用；传递引入 `MioKit.Sdk`、`Ti.Avalonia.Shadcn` |
+| `MioKit.Sdk` | PluginBase、MioObject、IFeature、EAV、搜索类型（通常不必再显式引用） |
 | `MioKit.SourceGenerate` | EAV/Memory 源生成（`PrivateAssets=all`） |
 | `MioKit.Webview2` | 按需：WebView2 + JS 桥接 |
 
@@ -75,7 +80,7 @@
 
 ## 4. 插件私有依赖（nugetDependents）
 
-Sdk 与 Host **均未提供** 的新包：
+这里的「私有」指**宿主未提供、仅该插件使用**的第三方包，不是私有 NuGet 源。这些包同样从 nuget.org（或用户指定源）还原。Sdk 与 Host **均未提供** 的新包：
 
 1. csproj 添加 `PackageReference`（编译）
 2. `plugin.json` 声明 `nugetDependents`（宿主安装时解析、锁定并校验）

@@ -12,7 +12,7 @@
   "id": "com.contoso.plugin.my-plugin",
   "name": "My Plugin",
   "assembly": "MyPlugin.dll",
-  "minSdkVersion": "2.0.0"
+  "minSdkVersion": "1.0.0"
 }
 ```
 
@@ -22,9 +22,9 @@
 | `id` | 全局插件 ID；必须等于 `PluginBase(id)`、Const 中的 `PluginId` 与 `Keyed<IPlugin>(id)`。 |
 | `name` | 显示名称。 |
 | `assembly` | 包/插件目录根的入口 DLL 文件名，必须与构建产物一致。 |
-| `minSdkVersion` | 可被 `System.Version` 解析的最低 SDK 版本。 |
+| `minSdkVersion` | 可被 `System.Version` 解析的最低 SDK 版本；新插件写 `1.0.0`。 |
 
-运行时还支持 `maxSdkVersion`（排他的最高 SDK 版本）和 `dependencies`（依赖的插件 ID 列表）。商店目录还读取 `minHostVersion` / `maxHostVersion` 作兼容性筛选；需要发布到商店时应同时填写这两个宿主版本字段。
+运行时还支持 `maxSdkVersion`（排他的最高 SDK 版本，必须大于 `minSdkVersion`）和 `dependencies`（依赖的插件 ID 列表）。商店目录还读取 `minHostVersion` / `maxHostVersion` 作兼容性筛选；需要发布到商店时应同时填写这两个宿主版本字段。例如 `minSdkVersion` `1.0.0`、`maxSdkVersion` `2.0.0` 表示兼容 1.x，不含 2.0.0。
 
 ## 常用可选字段
 
@@ -33,7 +33,7 @@
 | `description` / `category` / `author` / `website` | 显示和介绍信息；`description` 支持 Markdown。 |
 | `icon` | 相对插件目录的运行时图标路径；文件必须随构建与打包输出，并同步为 NuGet `PackageIcon`。 |
 | `supportEmail` / `supportUrl` | 支持信息。 |
-| `nugetDependents` | 仅插件私有的 NuGet 依赖，安装器按它下载；见 [nuget.md](nuget.md)。 |
+| `nugetDependents` | 宿主未提供的第三方 NuGet 依赖，安装器按它从 nuget.org（或指定源）下载；见 [nuget.md](nuget.md)。 |
 
 当前运行时不会从 `plugin.json` 取得已安装包的精确 NuGet 版本或包身份；安装器将包 ID/版本作为安装记录注入元数据。分发包的 ID 与版本用 `dotnet pack -p:PackageId=… -p:PackageVersion=…` 控制，见 [packaging.md](packaging.md)。
 
@@ -51,8 +51,8 @@
   "website": "https://example.com/my-plugin",
   "icon": "Assets/icon.png",
   "assembly": "MyPlugin.dll",
-  "minSdkVersion": "2.0.0",
-  "maxSdkVersion": "1.0",
+  "minSdkVersion": "1.0.0",
+  "maxSdkVersion": "2.0.0",
   "minHostVersion": "0.2.8",
   "maxHostVersion": "1.0",
   "dependencies": [],
@@ -85,5 +85,5 @@ SDK/宿主范围使用 `System.Version` 格式，不接受 SemVer 后缀。`plug
 - [ ] 版本范围可被 `System.Version` 解析，不带 `-beta` 等 SemVer 后缀
 - [ ] 不包含 `pluginVersion`、`releaseState`、`releaseDate`
 - [ ] 若配置 `icon`，同路径文件已标记为复制和 Pack，且 nuspec `icon` / NuGet `PackageIcon` 与其一致
-- [ ] 私有 NuGet 包同时有 `PackageReference` 和 `nugetDependents` 声明
+- [ ] 宿主未提供的第三方依赖同时有 `PackageReference` 和 `nugetDependents` 声明
 - [ ] 通过 [packaging.md](packaging.md) 检查 nupkg 根目录

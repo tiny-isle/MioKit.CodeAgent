@@ -7,7 +7,7 @@ const valid = {
   id: 'com.contoso.plugin.my-plugin',
   name: 'My Plugin',
   assembly: 'MyPlugin.dll',
-  minSdkVersion: '2.0.0',
+  minSdkVersion: '1.0.0',
 };
 
 describe('plugin-json', () => {

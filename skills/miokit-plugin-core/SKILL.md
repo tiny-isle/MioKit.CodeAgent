@@ -80,5 +80,6 @@ using MioKit.Sdk;
 - [ ] `plugin.json` 不包含 `pluginVersion`、`releaseState`、`releaseDate`；包版本由
   NuGet SemVer 决定。
 - [ ] 打包后根目录包含正确的 DLL 和 `plugin.json`，不携带宿主共享 DLL。
+- [ ] SDK / 模板依赖从 nuget.org 还原；不要为 MioKit 包添加私有源或本地 nupkg。
 - [ ] 异常通过 `Context.Logger` 记录，插件私有数据使用 `Context.PluginDataPath`。
 - [ ] 不确定 API 时先查 [sdk-api-index.md](references/sdk-api-index.md)，不要猜测未列出的成员。

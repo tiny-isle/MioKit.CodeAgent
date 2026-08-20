@@ -47,21 +47,32 @@ npm run inspect
 
 ## 发布
 
-通过 GitHub Actions + [npm Trusted Publishing](https://docs.npmjs.com/trusted-publishers/) 发到 npmjs.org，不需要本机 npm token。
+后续版本走 GitHub Actions + [npm Trusted Publishing](https://docs.npmjs.com/trusted-publishers/)，不需要本机 npm token。npm **不能**在组织设置里给尚未存在的包绑定 Trusted Publisher。
 
-### 一次性：在 npm 绑定工作流
+### 第一次：本机发一版，再绑定
 
-包还不存在时，在 npm 组织 [tiny-isle](https://www.npmjs.com/org/tiny-isle) 添加 Trusted Publisher（pending）；发过之后在包设置里改。字段必须和仓库一致：
+`@tiny-isle/miokit-mcp` 必须先出现在 npm 上。用账号登录官方源（不要走 npmmirror），在本目录发布当前版本：
+
+```bash
+npm login --registry=https://registry.npmjs.org/
+npm publish --registry=https://registry.npmjs.org/
+```
+
+会提示 2FA。成功后打开包设置：
+
+[https://www.npmjs.com/package/@tiny-isle/miokit-mcp/access](https://www.npmjs.com/package/@tiny-isle/miokit-mcp/access)
+
+在 **Trusted Publisher** 里选 GitHub Actions，填：
 
 - Organization or user: `tiny-isle`
-- Repository: `MioKit.CodeAgent`
+- Repository: `MioKit.CodeAgent`（只要仓库名，不要带 org）
 - Workflow filename: `publish-mcp.yml`（只要文件名，含 `.yml`）
 - Environment: 留空
 - Allowed actions: `npm publish`
 
-先把 `.github/workflows/publish-mcp.yml` 推到 GitHub，再在 npm 上保存上述配置。
+保存后，以后用 tag 发版即可。
 
-### 发一版
+### 之后发一版
 
 在本目录把 `package.json` / lockfile 改到目标版本，并同步 [`src/server.ts`](src/server.ts) 的 `SERVER_VERSION`：
 

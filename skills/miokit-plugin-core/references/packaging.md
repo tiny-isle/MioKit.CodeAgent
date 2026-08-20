@@ -27,7 +27,7 @@ Agent 调 MCP `pack_plugin`：
   "id": "com.contoso.plugin.my-plugin",
   "name": "My Plugin",
   "assembly": "MyPlugin.dll",
-  "minSdkVersion": "2.0.0"
+  "minSdkVersion": "1.0.0"
 }
 ```
 
@@ -62,7 +62,7 @@ Agent 调 MCP `pack_plugin`：
 </ItemGroup>
 ```
 
-不要把 `MioKit.Sdk.dll`、`MioKit.SourceGenerate.dll`、`MioKit.Webview2.dll` 或宿主已有共享库手动塞进包；加载时必须复用宿主程序集。私有第三方依赖的声明见 [nuget.md](nuget.md)。
+不要把 `MioKit.Sdk.dll`、`MioKit.SourceGenerate.dll`、`MioKit.Webview2.dll` 或宿主已有共享库手动塞进包；加载时必须复用宿主程序集。宿主未提供的第三方依赖声明见 [nuget.md](nuget.md)。
 
 SDK 1.0 的卸载清理由插件入口类返回声明式 `PluginDataCleanupPlan`。`plugin.json` 没有 cleanup DLL 字段，包内也不得增加独立卸载 DLL、卸载脚本或 SQL；模板只打包入口 DLL 与运行资源。
 
