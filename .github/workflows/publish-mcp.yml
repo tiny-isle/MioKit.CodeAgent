@@ -1,0 +1,44 @@
+name: Publish MCP
+
+on:
+  push:
+    tags:
+      - 'mcp-v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mcp
+    steps:
+      - uses: actions/checkout@v6
+
+      # Do not set registry-url here: setup-node would write an empty
+      # _authToken and npm would skip OIDC trusted publishing.
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Use npm with OIDC support
+        run: npm install -g npm@latest
+
+      - name: Check tag matches package.json
+        if: startsWith(github.ref, 'refs/tags/mcp-v')
+        run: |
+          expected="${GITHUB_REF_NAME#mcp-v}"
+          actual="$(node -p "require('./package.json').version")"
+          if [ "$actual" != "$expected" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match mcp/package.json version $actual"
+            exit 1
+          fi
+
+      - run: npm ci
+
+      - run: npm publish

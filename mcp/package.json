@@ -1,17 +1,33 @@
 {
-  "name": "miokit-mcp",
-  "version": "0.1.0",
+  "name": "@tiny-isle/miokit-mcp",
+  "version": "0.0.1",
   "description": "MioKit MCP server — tools for MioKit workflows",
   "type": "module",
-  "private": true,
+  "bin": {
+    "miokit-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tiny-isle/MioKit.CodeAgent.git",
+    "directory": "mcp"
+  },
   "engines": {
     "node": ">=20"
   },
   "scripts": {
     "start": "tsx src/index.ts",
+    "build": "tsc -p tsconfig.build.json",
     "inspect": "npx @modelcontextprotocol/inspector npx tsx src/index.ts",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/lib/plugin-id.test.ts src/lib/plugin-json.test.ts src/lib/nupkg-inspect.test.ts src/lib/templates.test.ts src/lib/pack-plugin.test.ts src/lib/dev-environment.test.ts"
+    "test": "tsx --test src/lib/plugin-id.test.ts src/lib/plugin-json.test.ts src/lib/nupkg-inspect.test.ts src/lib/templates.test.ts src/lib/pack-plugin.test.ts src/lib/dev-environment.test.ts",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build"
   },
   "keywords": [
     "mcp",
@@ -21,11 +37,11 @@
   "dependencies": {
     "@modelcontextprotocol/server": "^2.0.0",
     "fflate": "^0.8.3",
-    "tsx": "^4.23.12",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^26.2.0",
+    "tsx": "^4.23.12",
     "typescript": "^7.0.2"
   }
 }

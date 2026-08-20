@@ -5,7 +5,7 @@
 ## 目录
 
 ```text
-mcp/       Node.js MCP 服务（npm 包名 miokit-mcp）
+mcp/       Node.js MCP 服务（npm 包名 @tiny-isle/miokit-mcp）
 skills/    Agent Skills（skills.sh 发现入口）
 ```
 
@@ -35,13 +35,30 @@ npx skills add tiny-isle/MioKit.CodeAgent --skill miokit-plugin-webview2
 
 ## 运行 MCP
 
+本仓库开发（改代码不必先发版）：
+
 ```bash
 cd mcp
 npm install
 npm start
 ```
 
-本仓库 `.cursor/mcp.json` 已指向 `mcp/`。在 Cursor Settings → MCP 中启用 `miokit-mcp` 后，Agent 即可调工具。开发、工具表与 Inspector 见 [mcp/README.md](mcp/README.md)。
+本仓库 `.cursor/mcp.json` 已指向 `mcp/`。在 Cursor Settings → MCP 中启用 `miokit-mcp` 后，Agent 即可调工具。
+
+别人用已发布包（不必 clone 本仓库）：
+
+```json
+{
+  "mcpServers": {
+    "miokit-mcp": {
+      "command": "npx",
+      "args": ["-y", "@tiny-isle/miokit-mcp"]
+    }
+  }
+}
+```
+
+本机需要 Node 20+ 和 .NET 10 SDK。开发、发布、工具表与 Inspector 见 [mcp/README.md](mcp/README.md)。
 
 ## 分工
 
