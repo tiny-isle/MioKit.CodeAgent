@@ -14,7 +14,7 @@ using MioKit.Sdk;
 |------|------|--------|----------|
 | **EAV** | `EavProperty<T>` + `[EavRelation]` | ✅ 跨会话写库 | 名称、路径、热键、开关、配置 |
 | **设置页配置 EAV** | `SettingEavProperty<T>` + `[EavRelation(IPluginFeature)]` | ✅ 同上，并自动生成设置 UI | 插件配置项（int/string/枚举/路径/字符串列表等） |
-| **Memory** | `MemoryProperty<T>` + `[MemoryRelation]` | ❌ 仅进程内 | 已加载图像、运行时 UI 状态 |
+| **Memory** | `MemoryProperty<T>` + `[MemoryRelation]` | ❌ 仅进程内 | 已加载图像、运行时 UI 状态；需要跨插件只读时可配置稳定 Guid |
 | **整节点内存** | `IMemoryNodeFeature` 标记 | 默认不落库；`ForcePersistence` 可例外 | 临时节点上的少量用户偏好（见 [features-basics.md](features-basics.md)） |
 | **无 Relation** | 直接 `EavProperty` 字段 | ✅ 但不生成扩展 | 极少用；读写走 `MioObject.GetValueAsync` / `SetValue` |
 
@@ -38,7 +38,7 @@ using MioKit.Sdk;
 | 字段名 | 以 `Property` 结尾，如 `PathProperty` → 生成 `GetPath` / `SetPath` |
 | EAV | `[EavRelation(typeof(IFeature))]` + `EavPropertyBuilder<T>.Create()...Build()` |
 | Memory | `[MemoryRelation(typeof(IFeature))]` + `MemoryPropertyBuilder<T>.Create()...Build()` |
-| Guid | 每个 EAV / SettingEav `WithId` **全局唯一**，发布后不可改。身份放进 `XxxConst`：`const string XxxPropertyId` + `static readonly Guid XxxPropertyGuid = Guid.Parse(XxxPropertyId)`。`.WithId(XxxConst.XxxPropertyGuid)`；禁止 `Guid.Parse("……")`。新值先调 MCP `generate_guid` 填 `const string`。Memory 不要 `WithId` |
+| Guid | 每个 EAV / SettingEav `WithId` **全局唯一**，发布后不可改；Memory 只有需要跨插件只读寻址时才配置可选 Guid。身份放进 `XxxConst`：`const string XxxPropertyId` + `static readonly Guid XxxPropertyGuid = Guid.Parse(XxxPropertyId)`。`.WithId(XxxConst.XxxPropertyGuid)`；禁止 `Guid.Parse("……")`。新值先调 MCP `generate_guid` 填 `const string` |
 | 多 Feature | 同一属性可 `[EavRelation(typeof(IA), typeof(IB))]`（少见） |
 | 文档 | 新增属性同步 `docs/features-and-properties.md` |
 
@@ -68,11 +68,52 @@ public static MemoryProperty<long> RevisionProperty { get; } =
 
 Memory 适合轻量运行时状态。解码图片应由 `IIconLease` 管理，不要长期挂在节点属性上。
 
+### 跨插件只读属性
+
+需要让其他插件按稳定 Guid 读取属性时，EAV 属性直接使用已有的 `EavProperty.Id`；
+只有确实需要跨插件寻址的 Memory 属性才调用 `MemoryPropertyBuilder<T>.WithId(Guid)`。
+未配置 Id 的 Memory 属性仍可在拥有者插件内正常读写，但不能被其他插件按 Guid 读取。
+
+```csharp
+[MemoryRelation(typeof(IMyRuntimeStateFeature))]
+public static MemoryProperty<string> StatusProperty { get; } =
+    MemoryPropertyBuilder<string>.Create()
+        .WithId(MyPluginConst.StatusPropertyGuid)
+        .WithName("Status")
+        .Build();
+
+// 调用方不需要引用属性拥有者的程序集，只需持有发布的稳定 Guid。
+var result = await context.TargetObject.ReadPropertyAsync<string>(
+    MyPluginConst.StatusPropertyGuid,
+    cancellationToken);
+
+if (result.IsSuccess)
+{
+    var status = result.Value;
+}
+```
+
+`ReadPropertyAsync<T>` 是只读 API，泛型 `T` 必须与属性声明的值类型匹配。宿主扫描带有
+`[EavRelation]` 或 `[MemoryRelation]` 的公开静态属性，并使用拥有者声明的原始属性实例读取，
+因此 EAV 的存储类型、转换器、缓存/默认值和 Memory 属性的原有索引行为保持不变。当前
+不提供跨插件写入 API；需要修改目标插件状态时使用目标插件公开的 Plugin Call。
+
+| 错误码 | 含义 |
+|---|---|
+| `property.not_registered` | Guid 未登记，包括未配置 Id 的 Memory 属性 |
+| `property.type_mismatch` | 请求的泛型类型与属性声明类型不一致 |
+| `property.ambiguous` | 多个已加载属性声明了相同 Guid，读取被拒绝 |
+| `property.read_failed` | 属性读取过程失败 |
+
+取消会继续抛出 `OperationCanceledException`，不会转换成普通 `Result` 失败；其他读取异常
+会以 `Result<T?>.Failure(...)` 返回。`MioType` 和公开属性 Guid 都是跨插件稳定契约，
+发布后不要随意更换。
+
 ### EAV 构建器常用项
 
 | 方法 | 说明 |
 |------|------|
-| `WithId(Guid)` | **必填**（EAV / SettingEav）；引用 `XxxConst.XxxPropertyGuid`，禁止内联字面量 |
+| `WithId(Guid)` | EAV / SettingEav **必填**；Memory 仅跨插件只读寻址时可选；引用 `XxxConst.XxxPropertyGuid`，禁止内联字面量 |
 | `WithName(string)` | 逻辑名 |
 | `WithPolicy(EavCachePolicy)` | 缓存策略（见 [扩展属性高级用法](extension-properties-advanced.md) §1） |
 | `WithStoreType(MioStoreType)` | 库列类型映射 |

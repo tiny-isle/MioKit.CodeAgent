@@ -45,8 +45,9 @@ protected override void OnDetachedRootTree() { /* 已出 RootNode 索引 */ }
 | `GetValueAsync<T>(EavProperty<T>)` | 异步读 EAV |
 | `TryGetValue<T>(EavProperty<T>, out T?)` | 尝试读 EAV |
 | `SetValue<T>(AttachProperty<T>, T?)` | 写入任意 Attach 属性 |
+| `ReadPropertyAsync<T>(Guid, CancellationToken)` | 按稳定属性 Guid 跨插件只读，返回 `Result<T?>` |
 
-→ 完整说明：[extension-properties.md](extension-properties.md)
+→ 常规属性读写与跨插件 Guid 读取：[extension-properties.md](extension-properties.md)
 
 ### Avalonia MVVM 绑定
 

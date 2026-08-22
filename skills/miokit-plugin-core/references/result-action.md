@@ -177,7 +177,81 @@ public sealed class OpenDataFolderAction : SearchResultActionBase
 
 ---
 
-## 7. 与搜索 / 执行的关系
+## 7. 跨插件 ResultAction 扩展
+
+如果一个插件需要为另一个插件的节点追加操作，不要让目标节点实现调用方插件的
+`IResultActionProviderFeature`。使用宿主全局的
+`IResultActionExtensionRegistry`，按目标节点的稳定 `MioType` 注册
+`IResultActionExtensionHandler`。
+
+### 注册与释放
+
+扩展处理器应随插件生命周期注册和释放，避免插件程序集卸载后注册表仍持有处理器实例：
+
+```csharp
+using MioKit.Sdk;
+
+public sealed class ResultActionExtensionComponent : IPluginLifecycleComponent
+{
+    private IDisposable? _registration;
+
+    public Task StartAsync(CancellationToken cancellationToken = default)
+    {
+        var registry = MioIoc.Resolve<IResultActionExtensionRegistry>();
+        _registration = registry.Register(
+            targetMioType: TargetPluginConst.TargetNodeType,
+            handler: new TargetNodeActionHandler(),
+            priority: 0);
+        return Task.CompletedTask;
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken = default)
+    {
+        _registration?.Dispose();
+        _registration = null;
+        return Task.CompletedTask;
+    }
+}
+```
+
+`Register` 返回的 `IDisposable` 是该次注册的令牌；重复 `Dispose` 安全。`priority` 越小
+越先返回，相同 priority 按注册顺序稳定排列。`targetMioType` 必须是目标节点发布的
+稳定 `MioType`，不要使用运行时类型名或插件内部实例 Id。
+
+### 扩展处理器
+
+处理器接收当前 `SearchResult` 和目标 `MioObject`，返回需要追加的操作：
+
+```csharp
+public sealed class TargetNodeActionHandler : IResultActionExtensionHandler
+{
+    public ValueTask<IEnumerable<ISearchResultAction>> GetActionsAsync(
+        ResultActionExtensionContext context,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (context.TargetObject is not TargetNode)
+            return ValueTask.FromResult<IEnumerable<ISearchResultAction>>([]);
+
+        IEnumerable<ISearchResultAction> actions = [new OpenTargetSettingsAction()];
+        return ValueTask.FromResult(actions);
+    }
+}
+```
+
+搜索面板会先取得节点自身的 `IResultActionProviderFeature` 操作，再追加扩展注册表返回
+的操作。多个扩展处理器彼此独立调用；单个处理器抛出普通异常时记录日志并返回空列表，
+不会阻止其他扩展。处理器必须尊重取消令牌；切换当前结果会取消旧查询，注册或注销处理器
+会通过 `ExtensionsChanged` 刷新当前结果。
+
+扩展 Action 如果需要修改目标插件状态，应通过 [plugin-calls.md](plugin-calls.md)
+调用目标插件公开的方法。不要直接解析目标插件容器、写入目标插件的属性或依赖目标插件
+的内部类型。
+
+---
+
+## 8. 与搜索 / 执行的关系
 
 ResultAction 不替代 `InvokeAsync`：
 
@@ -190,7 +264,7 @@ ResultAction 不替代 `InvokeAsync`：
 
 ---
 
-## 8. 检查清单
+## 9. 检查清单
 
 - [ ] 需要菜单的节点实现 `IResultActionProviderFeature`
 - [ ] `GetActionAsync` 返回 `ValueTask<IEnumerable<ISearchResultAction>>`
@@ -199,4 +273,6 @@ ResultAction 不替代 `InvokeAsync`：
 - [ ] `GetActionAsync` 根据 EAV 状态决定显示哪些项
 - [ ] 自定义类继承 `SearchResultActionBase`，设置清晰的 `Text` / `Group` / `Icon`
 - [ ] Action 不保存 per-result 可变状态；需要状态时从 `result` / `context` / `Payload` 读取
+- [ ] 跨插件 Action 按目标 `MioType` 注册，并在插件停止时释放 `IDisposable` 令牌
+- [ ] 跨插件扩展处理器尊重取消，不直接写目标插件属性；需要修改状态时使用 Plugin Call
 - [ ] 已在 `docs/features-and-properties.md` 记录节点 Feature

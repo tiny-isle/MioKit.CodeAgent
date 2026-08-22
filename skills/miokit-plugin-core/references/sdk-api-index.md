@@ -8,11 +8,11 @@
 | 跨插件方法调用 | `IPluginCallClient`、`IPluginCallStrategy`、`PluginCallRequest`、`PluginCallResponse`、`PluginCallErrorCodes` | [plugin-calls.md](plugin-calls.md) |
 | 节点、树、持久化 | `MioObject`、`RootNode`、`IMioDataProvider`、`MioObjectExtensions`、`EavQuery` | [nodes-and-tree.md](nodes-and-tree.md) |
 | 节点能力组合 | `IFeature`、`IInvokeFeature`、`ISearchableFeature`、`IAliasNameFeature`、`IPinnedFeature`、`IUseFeature` | [features.md](features.md) |
-| EAV / 内存属性 | `EavProperty<T>`、`SettingEavProperty<T>`、`MemoryProperty<T>`、`EavPropertyBuilder<T>`、`SettingEavPropertyBuilder<T>`、`MemoryPropertyBuilder<T>`、`[EavRelation]`、`[MemoryRelation]`、`SettingEditorKind` | [extension-properties.md](extension-properties.md) |
+| EAV / 内存属性 | `EavProperty<T>`、`SettingEavProperty<T>`、`MemoryProperty<T>`、`EavPropertyBuilder<T>`、`SettingEavPropertyBuilder<T>`、`MemoryPropertyBuilder<T>`、`MemoryPropertyBuilder<T>.WithId`、`MioObject.ReadPropertyAsync<T>`、`[EavRelation]`、`[MemoryRelation]`、`SettingEditorKind` | [extension-properties.md](extension-properties.md) |
 | 搜索与匹配 | `SearchRequest`、`SearchResult`、`IWriteOnlyResultList<T>`、`SearchHelper.TryMatch`、`ITextMatcher` | [search.md](search.md) |
 | 作用域/命令式搜索 | `IAttachPanelFeature`、`IAttachPanelSearchFeature`、`ISearchScopeFeature`、`SearchScopeFeatureBase` | [attach-search-panel.md](attach-search-panel.md) |
 | 执行环境 | `InvokeContext`、`InvocationSnapshot`、`IInvocationSnapshotProvider` | [invocation-snapshot.md](invocation-snapshot.md) |
-| 结果附加操作 | `IResultActionProviderFeature`、`ISearchResultAction`、`SearchResultActionBase` | [result-action.md](result-action.md) |
+| 结果附加操作 | `IResultActionProviderFeature`、`ISearchResultAction`、`SearchResultActionBase`、`IResultActionExtensionRegistry`、`IResultActionExtensionHandler`、`ResultActionExtensionContext` | [result-action.md](result-action.md) |
 | 搜索框内编辑 UI | `ISearchBoxWindow`、`IDialogContext`、`DialogResult` | `miokit-plugin-avalonia-ui` |
 | 热键与输入 Hook | `IHotkeyFeature`、`IGlobalHotKeyService`、`IKeyboardInputHandler`、`IMouseInputHandler` | [input-hooks.md](input-hooks.md) |
 | 图标、文件和窗口 | `IconRequest`、`IIconLease`、`IconLease`、`IIconProviderFeature`、`IIconService`、`IconSource`、`ShellHelper`、`WindowManager`、`PluginWindowExtensions.SetPluginIcon` | [sdk-helpers.md](sdk-helpers.md)；Avalonia 控件见 `miokit-plugin-avalonia-ui` |
