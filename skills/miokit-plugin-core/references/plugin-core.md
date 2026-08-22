@@ -292,6 +292,8 @@ public override ValueTask<PluginDataCleanupPlan> CreateDataCleanupPlanAsync(
 需要在服务、视图模型或其他插件类中访问插件实例及其上下文时，可以给 `partial` 类添加：
 
 ```csharp
+using MioKit.Sdk;
+
 [PluginAccess(typeof(MyPluginRegister), typeof(MyPlugin))]
 public partial class MyService
 {
@@ -302,6 +304,10 @@ public partial class MyService
 }
 ```
 
+目标类必须是非静态 `partial` 类。如果目标类嵌套在其他类中，所有外层类也必须声明为
+`partial`，且不能使用 file-local 类。特性参数必须分别指向具体、非抽象的
+`IRegister` 实现和具体、非抽象的 `IPlugin` 实现。
+
 源生成器会提供以下可空属性：
 
 | 属性 | 类型 | 说明 |
@@ -310,7 +316,9 @@ public partial class MyService
 | `PluginContext` | `IPluginContext?` | `Plugin?.Context` |
 | `Logger` | `Serilog.ILogger?` | `PluginContext?.Logger` |
 
-这些属性不缓存实例。插件 IOC 尚未创建或插件已卸载时会返回 `null`；插件加载并完成 IOC 注册后即可使用，包括 `InitializeCoreAsync`、`StartCoreAsync` 和生命周期组件。插件必须将具体插件类型注册到自身 IOC，并继续使用与 plugin.json 一致的 `Keyed<IPlugin>(PluginId)` 注册约定。
+这些属性不缓存实例。插件 IOC 尚未创建或插件已卸载时会返回 `null`；插件加载并完成 IOC 注册后即可使用，包括 `InitializeCoreAsync`、`StartCoreAsync` 和生命周期组件。插件必须将具体插件类型注册到自身 IOC，例如同时使用 `.As<IPlugin>()` 和 `.As(plugin.GetType())`，并继续使用与 plugin.json 一致的 `Keyed<IPlugin>(PluginId)` 注册约定。仅注册 `IPlugin` 接口或只注册 keyed 服务，无法解析生成的具体 `Plugin` 属性。
+
+生成器会在目标类中加入 `Plugin`、`PluginContext` 和 `Logger` 成员，因此目标类不能已经声明同名成员；如需自定义同名成员，应改用其他名称或不要使用 `[PluginAccess]`。
 
 ### MioIoc / RegisterBase（速查）
 

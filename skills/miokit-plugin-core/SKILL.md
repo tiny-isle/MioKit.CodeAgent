@@ -71,6 +71,8 @@ using MioKit.Sdk;
 
 - [ ] `RegisterBase<T>` 在程序集内唯一；入口使用 `PluginBase` 和
   `Keyed<IPlugin>(PluginId)`，构造函数不解析容器。
+- [ ] 使用 `[PluginAccess]` 时，目标类及其外层类满足 `partial` 约束；特性参数指向
+  具体的 `IRegister` / `IPlugin` 实现，且具体插件类型已注册到插件 IOC。
 - [ ] 后台逻辑通过 `IPluginLifecycleComponent` 注册，不塞进
   `StartCoreAsync` 或 `StopCoreAsync`。
 - [ ] 宿主服务使用 `MioIoc.Resolve<T>()`；插件私有服务使用插件容器。

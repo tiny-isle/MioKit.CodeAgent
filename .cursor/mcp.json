@@ -1,9 +1,0 @@
-{
-  "mcpServers": {
-    "miokit-mcp": {
-      "command": "npx",
-      "args": ["tsx", "src/index.ts"],
-      "cwd": "${workspaceFolder}/mcp"
-    }
-  }
-}
