@@ -29,7 +29,11 @@ description: >-
    `DynamicResource`，不要硬编码跨主题颜色。
 2. 视图只负责展示和交互；数据访问、搜索和长耗时工作放在核心 Feature 或服务中，
    不在 UI 线程执行阻塞操作。
-3. 插件窗口设置 Owner、AUMID 和插件图标，优先使用 SDK 的窗口和图标扩展，不自行
-   维护全局窗口字典或手动释放图标 lease。
-4. 需要在搜索框内编辑时，使用宿主 `ISearchBoxWindow` 与 `IDialogContext`，不要
+3. 插件顶层窗口优先使用 `shad:ShadWindow`，不要无理由退回原生 `Window`。在窗口的
+   `Interaction.Behaviors` 中挂载 `PluginWindowBehavior`，将 `Type` 设置为插件节点 Id，
+   由 Behavior 统一设置 Owner、AUMID 和窗口图标；不要自行读取 `IconPath`、手动调用
+   `GetIconAsync` 或维护全局窗口字典、图标 lease。
+4. 插件窗口默认设置 `CanPin="True"`，让用户可以使用 ShadWindow 的置顶功能。当前
+   `ShadWindow` 的实际属性名是 `CanPin`，不要写不存在的 `IsPin`。
+5. 需要在搜索框内编辑时，使用宿主 `ISearchBoxWindow` 与 `IDialogContext`，不要
    自建脱离宿主生命周期的顶层窗口。

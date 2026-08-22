@@ -7,6 +7,7 @@ Feature 和图标 Provider 语义见 `miokit-plugin-core` 的对应参考文档�
 
 | API | 用途 |
 |---|---|
+| `shad:ShadWindow` | 插件顶层窗口的首选窗口基类/根元素，提供 MioKit Shadcn 标题栏和窗口能力 |
 | `HighlightedTextBlock` / `MioObjectImage` / `KeyControl` | `MioKit.Sdk.Controls` 中的宿主兼容控件 |
 | `TopLevelHelper.GetMainWindowTopLevel()` | 获取对话框父级 |
 | `WindowManager.ShowUniqueWindow<T>(...)` | 显示单例窗口 |
@@ -15,6 +16,34 @@ Feature 和图标 Provider 语义见 `miokit-plugin-core` 的对应参考文档�
 | `PluginWindowExtensions.SetPluginIcon` | 使用插件图标设置窗口图标 |
 | `PluginWindowExtensions.SetAppUserModelId` | 设置 Windows 任务栏分组 |
 | `PluginWindowBehavior` | 在 AXAML 中聚合 Owner、AUMID 和图标行为 |
+
+### 插件窗口标准模板
+
+插件窗口优先使用 `ShadWindow`。将 `PluginWindowBehavior` 挂到窗口的
+`Interaction.Behaviors`，并把 `Type` 设置为插件节点 Id；Behavior 会负责窗口所有者、
+Windows 任务栏 AUMID 和插件图标。插件窗口默认开启置顶能力：当前 `ShadWindow` API
+使用 `CanPin="True"`，不是 `IsPin`。
+
+```xml
+<shad:ShadWindow xmlns="https://github.com/avaloniaui"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:i="using:Avalonia.Xaml.Interactivity"
+                 xmlns:behaviors="using:MioKit.Sdk.Behaviors"
+                 xmlns:shad="https://github.com/tiny-isle/Ti.Avalonia.Shadcn"
+                 CanPin="True"
+                 Title="插件窗口">
+    <i:Interaction.Behaviors>
+        <behaviors:PluginWindowBehavior Type="com.example.plugin.foo" />
+        <!-- Type 也可以绑定，但值必须是插件节点 Id。 -->
+    </i:Interaction.Behaviors>
+
+    <!-- 页面内容 -->
+</shad:ShadWindow>
+```
+
+`PluginWindowBehavior` 只负责插件窗口元数据与图标，不替代窗口状态、Owner 或业务
+生命周期管理。窗口仍应通过宿主的 `WindowManager` 打开/关闭；插件停止时依赖已设置的
+OwnerId 自动关闭。窗口图标加载失败不应阻塞窗口打开。
 
 同一插件的窗口应将 `AppUserModelID` 直接设为插件 Id。窗口必须通过
 `PluginWindowBehavior` 或 `SetOwnerId` 注册所有者，否则宿主停止插件时无法自动关闭。
