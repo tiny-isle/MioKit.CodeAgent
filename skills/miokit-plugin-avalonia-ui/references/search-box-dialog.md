@@ -38,12 +38,18 @@ void ResetOverlay(); // 关闭 Dialog / ActionBar
 
 ## 2. 基本流程
 
+`SearchResultActionBase` 的 `Icon` 属性可以直接设置 `LucideIconKind` 枚举值，宿主的
+搜索操作 UI 会自动渲染对应的 Lucide 图标。插件不需要在 Action 中手动创建图标控件。
+
 ```csharp
+using Lucide.Avalonia;
+
 public sealed class EditAliasAction : SearchResultActionBase
 {
     public EditAliasAction()
     {
         Text = "别名管理";
+        Icon = LucideIconKind.Tags;
     }
 
     public override async Task ExecuteAsync(
