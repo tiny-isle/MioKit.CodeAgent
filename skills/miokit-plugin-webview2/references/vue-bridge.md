@@ -190,6 +190,10 @@ WebView.Source = new Uri("http://localhost:5173");
 | `InitializeBridgeAsync(services, provider)` | 创建 `ServiceBridge`，扫描 `[JsService]` |
 | `Source` | 本地 `file://` 时映射为虚拟主机 `https://miokit.locale/index.html` |
 
+`MioWebview2` 还会自动把 `MioAppContext.Current.Environment.JavaScriptRuntimeDirectory`
+映射为 `https://jsruntime.local/`。插件无需自行配置这个虚拟主机；共享 Monaco 和其他
+大型前端依赖的目录、打包与版本规则见 [javascript-runtime.md](javascript-runtime.md)。
+
 **DEBUG**：桥接就绪后可 `OpenDebugWindow()`（F10 调试面板）。
 
 ### 4.3 主题同步

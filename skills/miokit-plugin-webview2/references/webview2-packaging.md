@@ -38,3 +38,21 @@ pnpm build
 - [ ] 前端资源使用相对 base，能在 WebView2 虚拟主机下加载。
 - [ ] 桥接只在 WebView2 环境测试；浏览器单独打开不能验证 .NET bridge。
 - [ ] nupkg 不包含 `node_modules` 或宿主共享程序集。
+
+## 共享 JavaScript runtime
+
+需要被多个 WebView 复用的大型 JavaScript 依赖，不要放入宿主共享 DLL，也不要覆盖
+宿主的 `monaco0.54.0`。将资源作为插件包内容分发，在运行时复制到
+`MioAppContext.Current.Environment.JavaScriptRuntimeDirectory` 下基于插件 ID 的唯一子目录，
+再通过 `https://jsruntime.local/<runtime-id>/...` 加载。完整的目录、版本和安全约定见
+[javascript-runtime.md](javascript-runtime.md)。
+
+例如把插件包内的 `jsruntime/<runtime-id>/` 内容复制到插件输出目录：
+
+```xml
+<Content Include="jsruntime\**">
+  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  <Pack>true</Pack>
+  <PackagePath>jsruntime</PackagePath>
+</Content>
+```

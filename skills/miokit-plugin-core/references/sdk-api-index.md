@@ -17,7 +17,7 @@
 | 热键与输入 Hook | `IHotkeyFeature`、`IGlobalHotKeyService`、`IKeyboardInputHandler`、`IMouseInputHandler` | [input-hooks.md](input-hooks.md) |
 | 图标、文件和窗口 | `IconRequest`、`IIconLease`、`IconLease`、`IIconProviderFeature`、`IIconService`、`IconSource`、`ShellHelper`、`WindowManager`、`PluginWindowExtensions.SetPluginIcon` | [sdk-helpers.md](sdk-helpers.md)；Avalonia 控件见 `miokit-plugin-avalonia-ui` |
 | 宿主服务和事件 | `IMioEventBus`、`IImageService`、`IFocusRequestService`、`ILocalWebhostClient` | [host-services.md](host-services.md) |
-| WebView2 + Vue | `MioWebview2`、`[JsService]`、`ServiceBridge` | `miokit-plugin-webview2` |
+| WebView2 + Vue + 共享 JS runtime | `MioWebview2`、`[JsService]`、`ServiceBridge`、`MioAppContext.Current.Environment.JavaScriptRuntimeDirectory` | `miokit-plugin-webview2` |
 | 打包与依赖 | `plugin.json`、MSBuild `Pack` 项、MCP `pack_plugin` / `inspect_plugin_nupkg`（不 push） | [packaging.md](packaging.md)、[nuget.md](nuget.md) |
 
 ## 使用规则

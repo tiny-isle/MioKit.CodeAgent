@@ -22,6 +22,7 @@ description: >-
 
 - [vue-bridge.md](references/vue-bridge.md)：C# `[JsService]`、Vue bridge、属性/集合/事件、主题同步和调试。
 - [vue-ui.md](references/vue-ui.md)：Vue 工程结构、主题、组件、快捷键、样式与交互规范。
+- [javascript-runtime.md](references/javascript-runtime.md)：共享 JavaScript runtime、Monaco 和插件静态依赖。
 - [webview2-packaging.md](references/webview2-packaging.md)：前端构建、`ui/dist`、运行时加载和 Pack 配置。
 
 ## 工作约定

@@ -132,9 +132,12 @@ window.setColorTheme({
 - 优先复用 `components/ui/` 中的组件。删除等不可逆操作使用 `ConfirmPopover`；普通编辑
   使用 `Dialog`；表格使用 `DataTable`（支持 selection、列显隐、分页和左右冻结列）。
 - 图标操作使用 `ActionIcon`，变体为 `default`、`primary`、`success`、`warning`、`error`。
-- 使用 Monaco 时，C# 须映射虚拟主机 `jsruntime.local` 到
-  `{AppBase}/jsruntime/monaco0.54.0/vs/`，通过 `loadMonaco()` 加载，并监听
-  `theme-changed` 将编辑器切为 `vs` 或 `vs-dark`。
+- 使用 Monaco 时，`MioWebview2` 会自动把共享 runtime 映射为
+  `https://jsruntime.local/`；通过 `loadMonaco()` 从
+  `https://jsruntime.local/monaco0.54.0/vs/` 加载，并监听 `theme-changed` 将编辑器
+  切为 `vs` 或 `vs-dark`。不要在插件中重复配置虚拟主机或覆盖宿主管理的
+  `monaco0.54.0`；其他大型共享依赖使用自己的唯一 runtime 子目录，详见
+  [javascript-runtime.md](javascript-runtime.md)。
 
 ### 常用组件速查
 
