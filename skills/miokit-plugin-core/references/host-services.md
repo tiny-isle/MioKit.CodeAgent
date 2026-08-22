@@ -49,7 +49,10 @@ if (MioIoc.TryResolve<ILocalWebhostClient>(out var webhost) && webhost is not nu
 - `ParentChangedMessage`：父级变化。
 - `MioPropertyChangedEventMessage`：持久化附加属性变化。
 
-节点自身的属性变化优先监听 `XxxProperty.Changed` 或 `MioObject.PropertyChanged`；只有需要跨插件、跨节点协调时才使用总线。处理器应尽快返回，耗时工作自行尊重 `CancellationToken`。
+节点自身的属性变化优先监听 `XxxProperty.Changed` 或 `MioObject.PropertyChanged`；需要
+跨模块事件广播时使用总线。若需要请求另一个运行中插件执行明确方法并返回结果，应使用
+[plugin-calls.md](plugin-calls.md) 中的跨插件方法调用，而不是把请求/响应伪装成事件。
+事件处理器应尽快返回，耗时工作自行尊重 `CancellationToken`。
 
 ## 可选本地 Web 服务
 
@@ -61,5 +64,6 @@ if (MioIoc.TryResolve<ILocalWebhostClient>(out var webhost) && webhost is not nu
 - [ ] 图标通过 `Context.Icons` 访问，没有解析兼容 `IIconService`
 - [ ] 插件私有服务只从插件 `ComponentContext` / `PluginBase.Container` 获取
 - [ ] 可选服务使用 `TryResolve` 或 `IsRegistered`
-- [ ] 只在跨模块事件时使用 `IMioEventBus`；普通属性变化使用属性观察
+- [ ] 只在跨模块事件时使用 `IMioEventBus`；跨插件方法请求使用
+      [plugin-calls.md](plugin-calls.md)，普通属性变化使用属性观察
 - [ ] 异常记录到 `Context.Logger`，不吞掉关键错误

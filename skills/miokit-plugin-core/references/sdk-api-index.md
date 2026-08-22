@@ -5,6 +5,7 @@
 | 目标 | 首选类型 / 成员 | 继续阅读 |
 |---|---|---|
 | 插件入口、生命周期与卸载清理声明 | `PluginBase`、`IPlugin`、`IPluginContext`、`[PluginAccess]`、`IPluginDataCleanupProvider`、`PluginDataCleanupPlan`、`RegisterBase<T>`、`MioIoc`、`IPluginLifecycleComponent` | [plugin-core.md](plugin-core.md) |
+| 跨插件方法调用 | `IPluginCallClient`、`IPluginCallStrategy`、`PluginCallRequest`、`PluginCallResponse`、`PluginCallErrorCodes` | [plugin-calls.md](plugin-calls.md) |
 | 节点、树、持久化 | `MioObject`、`RootNode`、`IMioDataProvider`、`MioObjectExtensions`、`EavQuery` | [nodes-and-tree.md](nodes-and-tree.md) |
 | 节点能力组合 | `IFeature`、`IInvokeFeature`、`ISearchableFeature`、`IAliasNameFeature`、`IPinnedFeature`、`IUseFeature` | [features.md](features.md) |
 | EAV / 内存属性 | `EavProperty<T>`、`SettingEavProperty<T>`、`MemoryProperty<T>`、`EavPropertyBuilder<T>`、`SettingEavPropertyBuilder<T>`、`MemoryPropertyBuilder<T>`、`[EavRelation]`、`[MemoryRelation]`、`SettingEditorKind` | [extension-properties.md](extension-properties.md) |

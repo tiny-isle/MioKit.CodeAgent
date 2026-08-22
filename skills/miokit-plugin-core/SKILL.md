@@ -40,7 +40,8 @@ using MioKit.Sdk;
 1. 确认工作区已经由 `miokit-plugin-new` 创建，并按需建立 `Features`、`Models`、
    `Nodes`、`Services` 和 `Views` 目录；不要添加空占位文件。
 2. 按主题索引选择**一项**与当前改动直接相关的参考并实现。入口或生命周期改动才读
-   `plugin-core.md`；新增节点才读 `nodes-and-tree.md`；搜索改动才读 `search.md`。
+   `plugin-core.md`；跨插件方法调用读 `plugin-calls.md`；新增节点才读
+   `nodes-and-tree.md`；搜索改动才读 `search.md`。
 3. 文档涉及某一 Feature、属性或搜索框附着时，先打开该主题的路由页，再只选一个细分
    文档。不要因为创建节点就预读全部 Feature、搜索和 EAV 规则。
 4. 交付前仅按改动范围补读检查项；打包时使用 MCP 工具校验 `plugin.json`、生成所需
@@ -60,6 +61,7 @@ using MioKit.Sdk;
 | 附着到搜索框（先选基础或 command） | [attach-search-panel.md](references/attach-search-panel.md) |
 | 结果菜单 | [result-action.md](references/result-action.md) |
 | 调用快照 | [invocation-snapshot.md](references/invocation-snapshot.md) |
+| 跨插件方法调用 | [plugin-calls.md](references/plugin-calls.md) |
 | 宿主服务和事件 | [host-services.md](references/host-services.md) |
 | 输入 Hook 和热键 | [input-hooks.md](references/input-hooks.md) |
 | SDK 辅助 API 和反模式 | [sdk-helpers.md](references/sdk-helpers.md) |
