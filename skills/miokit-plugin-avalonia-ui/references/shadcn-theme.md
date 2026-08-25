@@ -70,6 +70,8 @@ xmlns:shad="https://github.com/tiny-isle/Ti.Avalonia.Shadcn"
 | Warning 前景 | `ShadWarningForegroundColor` | `ShadWarningForegroundBrush` |
 | Danger | `ShadDangerColor` | `ShadDangerBrush` |
 | Danger 前景 | `ShadDangerForegroundColor` | `ShadDangerForegroundBrush` |
+| Success | `ShadSuccessColor` | `ShadSuccessBrush` |
+| Success 前景 | `ShadSuccessForegroundColor` | `ShadSuccessForegroundBrush` |
 | Border | `ShadBorderColor` | `ShadBorderBrush` |
 | Input | `ShadInputColor` | `ShadInputBrush` |
 | Ring（焦点环） | `ShadRingColor` | `ShadRingBrush` |
@@ -135,6 +137,7 @@ xmlns:shad="https://github.com/tiny-isle/Ti.Avalonia.Shadcn"
 | `ShadShadowXs` | 输入框、按钮、复选框等轻量控件 |
 | `ShadShadowSm` | 卡片、选中标签页 |
 | `ShadShadowMd` | 弹出层、悬停卡片 |
+| `ShadShadowMdMargin` | Popup/Flyout 中为 `ShadShadowMd` 预留的布局边距 |
 | `ShadShadowFocusRing` | `:focus-visible` 焦点环 |
 
 ```xml
@@ -160,6 +163,7 @@ xmlns:shad="https://github.com/tiny-isle/Ti.Avalonia.Shadcn"
 | 输入框边框 | `ShadInputBrush` | — |
 | 焦点指示 | `ShadRingBrush` 或 `ShadShadowFocusRing` | — |
 | 危险 / 删除 | `ShadDangerBrush` | `ShadDangerForegroundBrush` |
+| 成功反馈 | `ShadSuccessBrush` | `ShadSuccessForegroundBrush` |
 | 次要说明文字 | — | `ShadMuteTextBrush` / `ShadLowTextBrush` |
 | 禁用文字 | — | `ShadDisabledTextBrush` |
 

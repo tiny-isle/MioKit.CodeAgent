@@ -1,4 +1,4 @@
 interface:
   display_name: "MioKit Avalonia UI"
-  short_description: "MioKit Avalonia and Shadcn UI development"
-  default_prompt: "Use $miokit-plugin-avalonia-ui for MioKit Avalonia views, AXAML, themes, controls, dialogs, and preview projects."
+  short_description: "MioKit Avalonia, Shadcn, behaviors, and MVVM"
+  default_prompt: "Use $miokit-plugin-avalonia-ui for MioKit Avalonia views, AXAML, themes, styles, effects, controls, behaviors, attached properties, MVVM, dialogs, and preview projects."
