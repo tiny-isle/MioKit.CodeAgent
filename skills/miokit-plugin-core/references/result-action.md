@@ -181,8 +181,8 @@ public sealed class OpenDataFolderAction : SearchResultActionBase
 
 如果一个插件需要为另一个插件的节点追加操作，不要让目标节点实现调用方插件的
 `IResultActionProviderFeature`。使用宿主全局的
-`IResultActionExtensionRegistry`，按目标节点的稳定 `MioType` 注册
-`IResultActionExtensionHandler`。
+`IResultActionExtensionRegistry`，按目标节点的稳定 `MioType`，或按
+`MioKit.Sdk` 公开的稳定 Feature 注册 `IResultActionExtensionHandler`。
 
 ### 注册与释放
 
@@ -218,6 +218,55 @@ public sealed class ResultActionExtensionComponent : IPluginLifecycleComponent
 越先返回，相同 priority 按注册顺序稳定排列。`targetMioType` 必须是目标节点发布的
 稳定 `MioType`，不要使用运行时类型名或插件内部实例 Id。
 
+当同一个操作适用于所有具备某项 SDK 能力的节点时，使用泛型 Feature 注册：
+
+```csharp
+_registration = registry.RegisterFeature<IHotkeyFeature>(
+    handler: new HotkeyExtraActionHandler(),
+    priority: 0);
+```
+
+Feature 注册只接受 `MioKit.Sdk` 程序集中公开的 `IFeature` 子接口，不接受
+`IFeature` 本身、具体节点类型、插件私有 Feature、字符串类型名或任意 `Type`。
+匹配包含接口继承关系，例如注册 `IInvokeFeature` 会命中实现 `IHotkeyFeature` 的节点。
+Feature 注册与 MioType 注册共用 priority 和注册顺序；两种方式同时命中时都会贡献操作。
+注册令牌仍须随插件生命周期释放。
+
+### `MioKit.Extensions` 快捷注册
+
+插件直接引用 `MioKit.Extensions` 时，可以用快捷方法省去只负责转发的处理器类。复用
+无 per-result 可变状态的单例 Action：
+
+```csharp
+_registration = registry.RegisterAction(
+    ClipboardContextNodeTypes.PlainText,
+    TranslateClipboardAction.Instance,
+    priority: 0);
+```
+
+需要根据当前结果动态决定操作时，传入委托：
+
+```csharp
+_registration = registry.RegisterActions(
+    ClipboardContextNodeTypes.SingleFile,
+    static (context, cancellationToken) =>
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var clipboard = context.GetClipboardSnapshot();
+
+        return clipboard.Files is [var file]
+            ? ValueTask.FromResult<IEnumerable<ISearchResultAction>>(
+                [new UploadFileAction(file)])
+            : ValueTask.FromResult<IEnumerable<ISearchResultAction>>([]);
+    });
+```
+
+完整快捷入口为 `RegisterAction`、`RegisterActions`、
+`RegisterFeatureAction<TFeature>` 和 `RegisterFeatureActions<TFeature>`。
+`GetClipboardSnapshot()` 返回当前搜索请求捕获的剪贴板快照；请求没有快照时返回
+`ClipboardSnapshot.Empty`。快捷方法只包装 `IResultActionExtensionHandler`，返回的
+`IDisposable` 仍须在插件停止时释放。
+
 ### 扩展处理器
 
 处理器接收当前 `SearchResult` 和目标 `MioObject`，返回需要追加的操作：
@@ -241,7 +290,8 @@ public sealed class TargetNodeActionHandler : IResultActionExtensionHandler
 ```
 
 搜索面板会先取得节点自身的 `IResultActionProviderFeature` 操作，再追加扩展注册表返回
-的操作。多个扩展处理器彼此独立调用；单个处理器抛出普通异常时记录日志并返回空列表，
+的操作。Feature 匹配基于结果所有者的运行时类型，不要求节点已经挂树。多个扩展处理器
+彼此独立调用；单个处理器抛出普通异常时记录日志并返回空列表，
 不会阻止其他扩展。处理器必须尊重取消令牌；切换当前结果会取消旧查询，注册或注销处理器
 会通过 `ExtensionsChanged` 刷新当前结果。
 
@@ -273,6 +323,6 @@ ResultAction 不替代 `InvokeAsync`：
 - [ ] `GetActionAsync` 根据 EAV 状态决定显示哪些项
 - [ ] 自定义类继承 `SearchResultActionBase`，设置清晰的 `Text` / `Group` / `Icon`
 - [ ] Action 不保存 per-result 可变状态；需要状态时从 `result` / `context` / `Payload` 读取
-- [ ] 跨插件 Action 按目标 `MioType` 注册，并在插件停止时释放 `IDisposable` 令牌
+- [ ] 跨插件 Action 按目标稳定 `MioType` 或 SDK Feature 注册，并在插件停止时释放 `IDisposable` 令牌
 - [ ] 跨插件扩展处理器尊重取消，不直接写目标插件属性；需要修改状态时使用 Plugin Call
 - [ ] 已在 `docs/features-and-properties.md` 记录节点 Feature
