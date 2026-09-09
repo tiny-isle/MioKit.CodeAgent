@@ -1,0 +1,16 @@
+{
+  "name": "miokit-code-agent",
+  "owner": {
+    "name": "tiny-isle"
+  },
+  "metadata": {
+    "description": "Skills and MCP for MioKit plugin development"
+  },
+  "plugins": [
+    {
+      "name": "miokit-code-agent",
+      "source": ".",
+      "description": "Skills and MCP for creating, validating, and packing MioKit plugins."
+    }
+  ]
+}

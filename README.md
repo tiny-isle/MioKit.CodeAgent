@@ -7,30 +7,39 @@
 ## 目录
 
 ```text
-plugin.json   Agent Plugins 清单（Cursor / Codex 插件身份）
-mcp.json      插件内 MCP 启动方式（npx @tiny-isle/miokit-mcp）
-mcp/          Node.js MCP 服务（npm 包名 @tiny-isle/miokit-mcp）
-skills/       Agent Skills（插件自动发现；也是 skills.sh 入口）
+.cursor-plugin/         Cursor marketplace + 插件清单（从文件夹导入用）
+.agents/plugins/         Codex marketplace 清单
+.codex-plugin/           Codex 插件清单
+plugin.json             Agent Plugins 清单（便携标准）
+mcp.json                Agent Plugins / Cursor 的 MCP 启动方式
+.mcp.json               Codex 的 MCP 启动方式（npx @tiny-isle/miokit-mcp）
+mcp/                    Node.js MCP 服务（npm 包名 @tiny-isle/miokit-mcp）
+skills/                 Agent Skills（插件自动发现；也是 skills.sh 入口）
 ```
 
 ## 作为 Cursor / Codex 插件安装
 
-这是同时获得 Skill 和 MCP 的方式。宿主会读根目录 `plugin.json`、扫描 `skills/`、并用 `mcp.json` 启动 MCP。
+这是同时获得 Skill 和 MCP 的方式。Cursor 从文件夹导入时读 `.cursor-plugin/marketplace.json`；Codex 市场读 `.agents/plugins/marketplace.json`，安装后读 `.codex-plugin/plugin.json`。Skill 在 `skills/`，MCP 由 `mcp.json` / `.mcp.json` 启动。
 
 本机需要 Node 20+ 和 .NET 10 SDK。MCP 通过已发布的 `@tiny-isle/miokit-mcp` 启动，不依赖本仓库里的 `mcp/` 源码。
 
 ### Cursor
 
-- **本地**：把本仓库放到 `~/.cursor/plugins/local/miokit-code-agent`（或该目录下的克隆），然后在 Customize 里启用。
-- **团队**：Dashboard → Plugins → Import from GitHub，导入 `tiny-isle/MioKit.CodeAgent`。
-- **Marketplace**：官方上架需另提审；未上架前用上面两种方式。
+从文件夹导入的是 marketplace（`.cursor-plugin/marketplace.json`），不是根上的 `plugin.json`。
+
+1. Customize → 从文件夹添加插件 → 选本仓库根目录。
+2. 安装列出的 `miokit-code-agent`。
+3. 启用 MCP `miokit-mcp`（本机需要 Node 20+）。
+
+团队可在 Dashboard → Plugins → Import from GitHub 导入 `tiny-isle/MioKit.CodeAgent`。官方 Marketplace 上架需另提审。
 
 ### Codex / ChatGPT
 
-把本仓库加为 marketplace 源后安装：
+把本仓库加为 marketplace 源，再安装插件：
 
 ```bash
 codex plugin marketplace add tiny-isle/MioKit.CodeAgent
+codex plugin add miokit-code-agent@miokit
 ```
 
 或在使用方仓库写 `.agents/plugins/marketplace.json`，`source.path` 指向本插件目录。公开 Plugins Directory 上架需另提交。

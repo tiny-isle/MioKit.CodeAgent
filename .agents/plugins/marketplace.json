@@ -1,0 +1,20 @@
+{
+  "name": "miokit",
+  "interface": {
+    "displayName": "MioKit"
+  },
+  "plugins": [
+    {
+      "name": "miokit-code-agent",
+      "source": {
+        "source": "local",
+        "path": "./"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "name": "miokit-code-agent",
+  "version": "0.0.2",
+  "description": "Skills and MCP for creating, validating, and packing MioKit plugins.",
+  "author": {
+    "name": "tiny-isle"
+  },
+  "homepage": "https://github.com/tiny-isle/MioKit.CodeAgent",
+  "repository": "https://github.com/tiny-isle/MioKit.CodeAgent",
+  "license": "MIT",
+  "keywords": ["miokit", "mcp"],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "MioKit Code Agent",
+    "shortDescription": "Skills and MCP for MioKit plugin development",
+    "longDescription": "Skills and MCP for creating, validating, and packing MioKit plugins.",
+    "developerName": "tiny-isle",
+    "category": "Developer Tools"
+  }
+}
