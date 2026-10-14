@@ -105,28 +105,42 @@ public class MyPlugin : PluginBase
 | `Keyed<IPlugin>(PluginId)` | 必须 = plugin.json `id` |
 | `RegisterService` | 注册 `IPlugin`、节点类型、**仅本插件使用**的服务；需随启停自动初始化的实现 `As<IPluginLifecycleComponent>()` |
 
-### 宿主 IoC vs 插件 IoC
+### 统一使用插件 DI
 
-| 容器 | 注册位置 | 解析方式 | 典型服务 |
-|------|----------|----------|----------|
-| **宿主** | 宿主全局容器 | **`MioIoc.Resolve<T>()`** | `IKeyboardHook`、`IGlobalHotKeyService`、`ISearchBoxWindow`、`ITextMatcher` |
-| **插件子 Scope** | 本插件 `RegisterService` | **`MyPluginRegister.Instance.ComponentContext.Resolve<T>()`**（或 `ComponentContextInstance`） | 插件内 `RegisterType` / `services.Add*` 注册的私有服务 |
-| **插件子 Scope**（有 `PluginBase` 时） | 同上 | **`Container!.Resolve<T>()`** | 生命周期方法内解析；子 Scope 可继承解析宿主已注册服务，但**插件私有服务必须用插件容器** |
+插件业务代码统一从插件 DI 获取服务，优先构造注入。插件 Scope 继承宿主全局注册，
+所以 Hook、搜索窗口、匹配器、插件私有服务及插件绑定的图标/任务/通知都通过同一
+入口获取，不需要按服务注册位置选择容器。不要自行覆盖宿主绑定服务。
+
+| 使用位置 | 获取方式 |
+|----------|----------|
+| 由插件 DI 创建的业务类、生命周期组件、ViewModel | 构造注入所需服务 |
+| `PluginBase` 生命周期方法 | `Container!.Resolve<T>()`；可选服务用 `TryResolve<T>` |
+| 无插件实例的节点或回调 | `MyPluginRegister.Instance.ComponentContext.Resolve<T>()`（或 `ComponentContextInstance`） |
+| 仅持有 Context（需对应 1.3.0 开发版） | `context.GetRequiredService<T>()` / `TryGetService<T>()`，解析同一个插件 Scope |
+
+`MioIoc` 是宿主根容器 API，保留用于理解宿主实现和旧代码；插件示例与新业务代码
+不把它作为常规入口。统一解析不改变共享服务的生命周期：只清理自己的订阅/注册，
+不停止或释放共享 Hook 等宿主服务。插件 Scope 本身由宿主管理。
 
 ```csharp
-// 宿主全局服务 — 任意静态/节点上下文均可
-var matcher = MioIoc.Resolve<ITextMatcher>();
+using Autofac;
+
+// PluginBase 方法内：同样可以解析宿主全局注册。
+var matcher = Container!.Resolve<ITextMatcher>();
 
 // 插件私有服务 — 节点、Service 等无 Plugin 实例时
 var svc = MyPluginRegister.Instance.ComponentContext.Resolve<MyPluginService>();
 
 // 插件生命周期内（InitializeCoreAsync / StartCoreAsync 等）
 var svc2 = Container!.Resolve<MyPluginService>();
+
+// 节点/回调只有 PluginContext 时（通用入口需对应 1.3.0 开发版）。
+var svc3 = PluginContext!.GetRequiredService<MyPluginService>();
 ```
 
 | ✅ 应做 | ❌ 禁止 |
 |--------|--------|
-| 宿主能力用 `MioIoc` | 在 `RegisterService` 里改 `MioIoc.Container` |
+| 所有服务统一使用插件 DI，业务类优先构造注入 | 在 `RegisterService` 里改 `MioIoc.Container` 或覆盖宿主绑定服务 |
 | 插件私有服务在 `RegisterService` 注册到子 Scope | 把插件单例注册到宿主根容器 |
 | 无 `PluginBase` 引用时用 `XxxRegister.Instance.ComponentContext` | 构造函数 / 字段初始化器里 `Resolve` |
 | `services.Add*` 与 `builder.Register*` 可混用（宿主会 `Populate`） | 程序集内多个 `IRegister` 实现 |
@@ -140,10 +154,29 @@ var svc2 = Container!.Resolve<MyPluginService>();
 ```
 验证 DLL → 加载程序集 → EavFactory.RegisterAssembly(assembly)
 → 扫描唯一 RegisterBase<T>
-→ MioIoc.Container.BeginLifetimeScope → RegisterService
+→ MioIoc.Container.BeginLifetimeScope → RegisterService → 绑定 Context.Services
 → ResolveKeyed<IPlugin> → 注入 Context / Container
 → InitializeAsync → [GetIsEnabledAsync() == false? 跳过] → StartAsync → Running
 ```
+
+宿主服务初始化先于插件加载，但宿主服务启动与插件加载并行，不能假定插件
+`StartCoreAsync` 时 Hook 已启动。需要底层输入就绪的组件应等待对应 `StartAsync`。
+
+Runtime 注入插件绑定的图标服务（1.3.0 开发版本）、任务服务与（支持时的）通知服务；
+`Context.Icons` 保留原签名和同一图标实例，标记弃用；通用 `IPluginServiceContext`
+替代任务专用接口，不再在 Context 保存 `IMioTaskService`。任务便捷扩展保留为通用包装，
+新业务代码统一优先 DI。通用入口与图标 DI 的版本前提见 [sdk-api-index.md](sdk-api-index.md)。
+初始化能取得服务，但任务/通知的
+登记入口到插件 `StartAsync` 前才打开。停止/卸载先关闭通知和任务入口、请求取消并
+等待活动排空，之后才进入插件停止管道；排空失败会保留 Scope，不能当作已经卸载。
+托管工作不能依赖后执行的停止钩子才退出。详细语义见
+[managed-tasks.md](managed-tasks.md)、[toast.md](toast.md)。
+
+Context 的 `Services` 公开 `IComponentContext`，Scope 构建后即可用于解析插件构造所需
+服务，但注册阶段不能提前解析。普通停止保留 Scope；卸载清理时解除 Context 绑定再
+释放 Scope。旧 Context 在卸载后不能继续解析，重新加载使用新的 Context/Scope。
+激活失败或排空超时而保留 Scope 时，不提前解除仍被活动工作使用的绑定。
+通用 Required/Try 的错误语义见 [host-services.md](host-services.md)。
 
 ### PluginBase 管道（勿重复实现）
 
@@ -181,7 +214,7 @@ public interface IPluginLifecycleComponent
 | 解析 | `PluginBase` 通过 `Container.Resolve<IEnumerable<IPluginLifecycleComponent>>()` 获取全部实现 |
 | 实例 | 建议 `SingleInstance()`，与插件子 Scope 同寿命 |
 | 适用 | 后台轮询、监听 EAV/事件总线、注册非节点级资源、WebView/网络客户端预热 |
-| 不适用 | 节点挂树（仍在 `StartCoreAsync` + `EnsureTreeLoadedAsync`）、宿主全局服务（用 `MioIoc`） |
+| 不适用 | 节点挂树（仍在 `StartCoreAsync` + `EnsureTreeLoadedAsync`）、创建或启停宿主共享服务（可注入使用，自己的订阅/注册随组件清理） |
 
 **调用顺序**
 
@@ -196,23 +229,38 @@ public interface IPluginLifecycleComponent
 public sealed class MyLifecycleWorker : IPluginLifecycleComponent
 {
     private CancellationTokenSource? _cts;
+    private Task? _loop;
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        _cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        _ = RunLoopAsync(_cts.Token);
+        cancellationToken.ThrowIfCancellationRequested();
+        _cts = new CancellationTokenSource();
+        _loop = RunLoopAsync(_cts.Token);
         return Task.CompletedTask;
     }
 
-    public Task StopAsync(CancellationToken cancellationToken)
+    public async Task StopAsync(CancellationToken cancellationToken)
     {
         _cts?.Cancel();
-        _cts?.Dispose();
-        _cts = null;
-        return Task.CompletedTask;
+        try
+        {
+            if (_loop is not null)
+                await _loop;
+        }
+        catch (OperationCanceledException) when (_cts?.IsCancellationRequested == true) { }
+        finally
+        {
+            _cts?.Dispose();
+            _cts = null;
+            _loop = null;
+        }
     }
 
-    private async Task RunLoopAsync(CancellationToken ct) { /* ... */ }
+    private static async Task RunLoopAsync(CancellationToken ct)
+    {
+        while (true)
+            await Task.Delay(TimeSpan.FromSeconds(1), ct); // 换成支持 token 的业务工作。
+    }
 }
 ```
 
@@ -226,13 +274,17 @@ builder.RegisterType<MyLifecycleWorker>()
 
 `InitializeCoreAsync` **不会**调用生命周期组件；仅 `StartAsync` / `StopAsync` 管道触发。
 
+上例为组件自行管理的局部循环，需要观察启动后的 `_loop` 故障并记录日志，停止时等待
+真实退出再释放资源。需要宿主查询/取消时改用 [managed-tasks.md](managed-tasks.md)：
+保留并观察 `RunAsync` 的 Task，循环直接响应其 token，不能等待组件 `StopAsync` 才取消。
+
 ### 各阶段职责
 
 | 阶段 | 插件应做 | 禁止 |
 |------|----------|------|
 | `InitializeCoreAsync` | 轻量初始化 | 挂树、长阻塞 |
 | `StartCoreAsync` | `EnsureTreeLoadedAsync<Group>(Const.GroupId)`（或重写 `EnsureSubTreeLoadedAsync` 集中管理多个子树） | 在 `StartCoreAsync` 里启动长期后台任务（改用 `IPluginLifecycleComponent`） |
-| `StopCoreAsync` | 轻量同步清理（长期任务在 `IPluginLifecycleComponent.StopAsync` 中停止） | 忽略 `CancellationToken` |
+| `StopCoreAsync` | 轻量清理；组件自行管理的循环在组件 Stop 中取消并等待，托管任务此前已排空 | 让托管任务依赖此阶段才退出，或忽略 `CancellationToken` |
 | `IPluginLifecycleComponent` | 注册到插件容器，自动随启停调用 | 在 `InitializeCoreAsync` 阶段依赖已挂树的节点 |
 | `CreateDataCleanupPlanAsync` | 声明未挂在插件根树下的额外持久化 EAV 根 ID | 返回路径、SQL、表名或执行删除操作 |
 
@@ -284,7 +336,7 @@ public override ValueTask<PluginDataCleanupPlan> CreateDataCleanupPlanAsync(
 | `Logger` | 插件 Serilog |
 | `PluginDataPath` | 插件私有数据目录 |
 | `PluginPath` | 插件 DLL 所在目录 |
-| `Icons` | 绑定当前插件所有者的 `IPluginIconService`；可读共享图标，只能修改自己的记录 |
+| `Icons` | 已弃用的兼容入口；与插件 DI 使用同一 `IPluginIconService`，新代码优先构造注入 |
 | `RuntimeState` | Created / Initialized / Running / Stopped / Faulted / Unloaded |
 
 ### `[PluginAccess]` 生成访问器
@@ -324,7 +376,7 @@ public partial class MyService
 
 | API | 说明 |
 |-----|------|
-| `MioIoc.Resolve<T>()` / `TryResolve` / `ResolveOptional` / `ResolveKeyed` / `IsRegistered` | 宿主容器 |
+| `MioIoc.Resolve<T>()` / `TryResolve` / `ResolveOptional` / `ResolveKeyed` / `IsRegistered` | 宿主根容器 API；插件代码统一通过插件 DI 解析 |
 | `RegisterBase<T>.Instance` | 注册器单例 |
 | `ComponentContext` / `ComponentContextInstance` | 插件子容器 |
 | `RegisterService(builder, services)` | 必须实现 |

@@ -10,6 +10,9 @@ description: >-
 服务注册和通用 NuGet/打包规则由 `miokit-plugin-core` 负责；网页组件、主题和交互规范
 由本 Skill 的 `vue-ui.md` 参考文档定义，不依赖生成项目内的 `.agents` 文档。
 
+命名空间：控件使用 `MioKit.Webview2`；`[JsService]` 与 `ServiceBridge` 使用
+`MioKit.Webview2.Core`，不要按包名推断它们都在根命名空间。
+
 ## 路由
 
 - 看到 `MioWebview2`、`MioKit.Webview2`、`[JsService]`、`ServiceBridge`、Vue、
@@ -20,7 +23,8 @@ description: >-
 
 ## 参考文档
 
-- [vue-bridge.md](references/vue-bridge.md)：C# `[JsService]`、Vue bridge、属性/集合/事件、主题同步和调试。
+- [vue-bridge.md](references/vue-bridge.md)：C# `[JsService]`、Vue bridge、属性/集合/事件、
+  插件任务/通知注入、主题同步和调试。
 - [vue-ui.md](references/vue-ui.md)：Vue 工程结构、主题、组件、快捷键、样式与交互规范。
 - [javascript-runtime.md](references/javascript-runtime.md)：共享 JavaScript runtime、Monaco 和插件静态依赖。
 - [webview2-packaging.md](references/webview2-packaging.md)：前端构建、`ui/dist`、运行时加载和 Pack 配置。
@@ -37,3 +41,6 @@ description: >-
    `MioKit.Webview2.dll` 或其他宿主共享 DLL 手动打包。
 5. Vue 界面文案直接写中文，不引入 i18n；优先复用 `components/ui/`，并采用 Tailwind
    语义化主题类（`bg-background`、`text-foreground`、`border-border` 等）。
+6. JsService 的服务统一由插件 DI 构造注入，插件 Scope 可继承全局注册；桥接容器复用
+   插件 DI 创建的实例。使用任务或宿主通知时，同样取得插件绑定实例；
+   不从 `MioIoc` 取根任务/通知服务，不把控件工厂或异步委托作为 JSON API。

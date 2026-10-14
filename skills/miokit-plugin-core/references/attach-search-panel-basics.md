@@ -119,7 +119,7 @@ public interface ISearchScopeFeature : IAttachPanelSearchFeature, IInvokeFeature
 
 `SearchCommandValidation.TryNormalize(raw, out normalized)`：仅接受 `^[a-z]+(?:[-_][a-z]+)*$`；首尾/连续分隔符、大写、数字或空白均返回 `false`。
 
-`ISearchBoxWindow`（`MioIoc.Resolve`）：`SetAttachedPanelAsync` · `ShowWindowAsync` / `HideWindowAsync` / `ToggleWindowAsync` / `RefreshAsync` · 内容宿主与 Avalonia Dialog 见 `miokit-plugin-avalonia-ui`。
+`ISearchBoxWindow`（统一从插件 DI 获取）：`SetAttachedPanelAsync` · `ShowWindowAsync` / `HideWindowAsync` / `ToggleWindowAsync` / `RefreshAsync` · 内容宿主与 Avalonia Dialog 见 `miokit-plugin-avalonia-ui`。
 
 ---
 
@@ -157,7 +157,7 @@ public class AppSearchScopeFeature : SearchScopeFeatureBase, IMemoryNodeFeature
 |------|----------|
 | `SearchCommands` | 空（子类 override，如 `["app"]`） |
 | `PreloadPropertySource` | 含 `AttachPanelExtension.UserSearchCommandsProperty`（`EavCachePolicy.Absolute`） |
-| `InvokeAsync` | `await MioIoc.Resolve<ISearchBoxWindow>().SetAttachedPanelAsync(this)` |
+| `InvokeAsync` | 基类内部请求宿主 `ISearchBoxWindow.SetAttachedPanelAsync(this)`；插件无需重复实现 |
 | `SearchAsync` | 遍历 `GetSearchableFeatures()` 并调用各组 `SearchAsync` |
 | `GetSearchableFeatures()` | 空（子类重写） |
 | `OnAttachSearchBox` / `OnDetachSearchBox` | 空（可按需重写） |
@@ -189,11 +189,12 @@ public class AppSearchScopeFeature : SearchScopeFeatureBase, IMemoryNodeFeature
 ## 5. 宿主 API
 
 ```csharp
+// searchBox 由插件 DI 构造注入 ISearchBoxWindow。
 // 插件侧附着（通常由 InvokeAsync 调用）
-await MioIoc.Resolve<ISearchBoxWindow>().SetAttachedPanelAsync(scopeFeature);
+await searchBox.SetAttachedPanelAsync(scopeFeature);
 
 // 清除附着
-await MioIoc.Resolve<ISearchBoxWindow>().SetAttachedPanelAsync(null);
+await searchBox.SetAttachedPanelAsync(null);
 ```
 
 | 方法 | 说明 |

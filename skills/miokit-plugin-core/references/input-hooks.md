@@ -38,15 +38,24 @@ IHotkeyFeature 节点         HotkeyProperty → InvokeAsync(InvokeContext.FromH
 
 ## 2. 宿主启动状态
 
+本次新增 `ExtraInfo`、可选分发接口及下述启动/停止语义按 SDK 1.2.3+ 与对应宿主实现
+核对；版本与发布条件见 [sdk-api-index.md](sdk-api-index.md)。
+
 宿主输入服务启动时：
 
-1. `MioIoc.Resolve<IKeyboardHook>()`
+1. 从插件 DI 获取 `IKeyboardHook`（继承宿主注册的共享实例）
 2. 将实现 `IGlobalHotKeyService` 的宿主热键处理器挂入键盘链
-3. `keyboardHook.StartAsync()` — **键盘 Hook 已启动**
+3. 等待 `keyboardHook.StartAsync()` — 成功后键盘 Hook 才就绪
 
-**鼠标 Hook 默认未启动**。插件若需全局鼠标监听，须自行 `MioIoc.Resolve<IMouseHook>()` 并 `StartAsync`（见 §6）。
+**鼠标 Hook 默认未启动**。插件若需全局鼠标监听，从插件 DI 注入 `IMouseHook` 并等待 `StartAsync`（见 §6）。
 
 宿主会初始化节点热键桥接服务，确保挂树后的 `IHotkeyFeature` 能同步到 `IGlobalHotKeyService`。
+
+宿主服务启动与插件加载并行，不能假定插件 `StartAsync` 时键盘已经就绪。
+自定义输入组件需要立即可用时可等待共享 Hook 的 `StartAsync(ct)`；并发调用共享底层
+启动，安装失败向调用方报错。取消已开始的 Start/Stop 只取消当前等待，底层共享操作
+继续。`StopAsync` 等待资源释放，但在 Hook 自身同步回调线程调用时仅请求停止并立即
+返回，避免等待自身退出。插件停止只注销自己的 Handler/热键，不停止宿主共享 Hook。
 
 ---
 
@@ -191,6 +200,10 @@ public enum InputEventHandleResult : byte
 | `Position` | 屏幕坐标 `Point` |
 | `Delta` | 滚轮增量 |
 | `IsDoubleClick` | 是否双击 |
+| `ExtraInfo` | SDK 1.2.3+ 的原生 `dwExtraInfo`（`nuint`），可区分自己附带标签的模拟输入；不是可信身份 |
+
+`Position` 使用屏幕像素，可因左侧/上方显示器而为负值。旧构造重载仍可用，默认
+`ExtraInfo = 0`。标签与 `IsSimulator` 组合用于避免自身回放递归，不应据此信任外部输入。
 
 ### Keys 与 MouseKey
 
@@ -208,9 +221,14 @@ public enum InputEventHandleResult : byte
 ### 6.1 注册键盘 Handler
 
 ```csharp
-public class MyKeyCapture : IKeyboardInputHandler
+using MioKit.Sdk;
+
+// 在 RegisterService 中 AsSelf().As<IPluginLifecycleComponent>().SingleInstance()。
+public sealed class MyKeyCapture : IKeyboardInputHandler, IPluginLifecycleComponent
 {
-    public string InputHandlerId => nameof(MyKeyCapture);
+    private readonly IKeyboardHook _hook;
+    public MyKeyCapture(IKeyboardHook hook) => _hook = hook;
+    public string InputHandlerId => "com.example.plugin.capture.keyboard";
     public ushort InputHandlerOrder => 50;   // < 100 可先于宿主全局热键处理器
     public bool IsEnableHandler { get; set; } = true;
     public bool SupportKeyDown => true;
@@ -224,19 +242,33 @@ public class MyKeyCapture : IKeyboardInputHandler
 
     public InputEventHandleResult HandleKeyUp(KeyboardEventArgs args)
         => InputEventHandleResult.None;
-}
 
-// StartCoreAsync 内（宿主输入服务已启动后）
-var hook = MioIoc.Resolve<IKeyboardHook>();
-hook.RegisterHandler(new MyKeyCapture());
+    public async Task StartAsync(CancellationToken cancellationToken = default)
+    {
+        await _hook.StartAsync(cancellationToken);
+        _hook.RegisterHandler(this);
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken = default)
+    {
+        _hook.UnregisterHandler(this);
+        return Task.CompletedTask;
+    }
+}
 ```
+
+同步 Handler 尽快返回；耗时工作移到队列/任务服务，不在输入线程同步等待。
 
 ### 6.2 注册鼠标 Handler
 
 ```csharp
-var mouseHook = MioIoc.Resolve<IMouseHook>();
+// mouseHook 由插件 DI 构造注入 IMouseHook。
+// 生命周期组件 StartAsync：保留同一个 myMouseHandler 实例用于停止时注销。
+await mouseHook.StartAsync(cancellationToken);
 mouseHook.RegisterHandler(myMouseHandler);
-await mouseHook.StartAsync();   // 宿主默认未启动，需显式 Start
+
+// 组件 StopAsync：只解除自己的注册，不 Stop/Dispose 共享 Hook。
+mouseHook.UnregisterHandler(myMouseHandler);
 ```
 
 ### 6.3 直接操作 IGlobalHotKeyService
@@ -244,31 +276,62 @@ await mouseHook.StartAsync();   // 宿主默认未启动，需显式 Start
 非节点场景（无 `IHotkeyFeature`）可手动注册：
 
 ```csharp
-var hotkeys = MioIoc.Resolve<IGlobalHotKeyService>();
+// hotkeys 由插件 DI 构造注入 IGlobalHotKeyService。
 hotkeys.Register(new HotKeyDefinition(
-    id: "my-plugin-action",
-    hotKeyInfo: new HotKeyInfo(HotKeyInfo.TypeExactMatch, KeyCode.Control, KeyCode.B),
-    suppressEvent: true,
-    stopPropagation: true));
+    Id: "my-plugin-action",
+    HotKeyInfo: new HotKeyInfo(HotKeyInfo.TypeExactMatch, KeyCode.Control, KeyCode.B),
+    SuppressEvent: true,
+    StopPropagation: true));
 
-hotkeys.Triggered += (_, e) =>
+void OnTriggered(object? sender, HotKeyTriggeredEventArgs e)
 {
     if (e.Registration.Id == "my-plugin-action") { /* ... */ }
-};
+}
+hotkeys.Triggered += OnTriggered;
+
+// 组件停止时使用相同委托退订，再注销自己的热键。
+hotkeys.Triggered -= OnTriggered;
+hotkeys.Unregister("my-plugin-action");
 ```
 
-插件 `StopCoreAsync` / 卸载时应 `Unregister` 并 `UnregisterHandler`，避免泄漏。
+手动热键同样放在生命周期组件中注册/清理。不要调用全局 `Clear`，避免影响其他插件。
+
+### 6.4 可选输入线程分发
+
+`IInputHookDispatcher` 是额外能力，不是 `IInputHook` 的必需成员。当前宿主只有
+`IMouseHook` 实例实现它，键盘实例没有；接口也未单独注册到根容器。
+对已解析的 Hook 做能力探测，缺失时显式报告/跳过依赖该能力的功能，不偷偷换线程。
+
+```csharp
+using MioKit.Sdk;
+
+public static async Task<bool> TryUpdateInputStateAsync(
+    IMouseHook hook, Action updateState, CancellationToken cancellationToken = default)
+{
+    if (hook is not IInputHookDispatcher dispatcher)
+        return false;
+
+    await hook.StartAsync(cancellationToken);
+    await dispatcher.DispatchAsync(updateState, cancellationToken);
+    return true;
+}
+```
+
+只投递短同步 `Action`，不能传 `async` lambda 形成 `async void`。
+`DispatchAsync` 始终排队，即使在 Hook 线程调用也不会内联；不要在该线程使用
+`.Wait()` / `.Result`。排队前取消可阻止执行，已开始工作不中断；Action 异常使返回
+Task 失败，不终止输入循环。停止会取消未开始工作并等待正在执行的工作，重启不会
+执行旧队列。调用方应等待/观察 Task，并处理停止、取消、未启动或已释放的情况。
 
 ---
 
-## 7. 解析服务：MioIoc vs 插件 Container
+## 7. 统一从插件 DI 获取服务
 
-| 服务 | 解析方式 |
-|------|----------|
-| `IKeyboardHook` / `IMouseHook` / `IGlobalHotKeyService` | **`MioIoc.Resolve<T>()`**（宿主全局容器） |
-| `IMioDataProvider`、插件内部服务 | **`Container!.Resolve<T>()`**（插件子容器） |
-
-Hook 与热键服务注册在宿主全局容器中，不在插件 `RegisterService` 内。
+`IKeyboardHook` / `IMouseHook` / `IGlobalHotKeyService` 与数据服务、插件私有服务
+一样，优先由插件 DI 构造注入；`PluginBase` 方法内也可使用 `Container!.Resolve<T>()`。
+Hook 与热键服务虽在宿主全局容器注册，插件 Scope 会继承这些共享实例，无需使用
+`MioIoc` 或在 `RegisterService` 重新注册 Hook。只注册自己的处理器/生命周期组件，
+停止时只注销自己的资源。
 
 ---
 
@@ -276,10 +339,10 @@ Hook 与热键服务注册在宿主全局容器中，不在插件 `RegisterServi
 
 | ✅ 应做 | ❌ 禁止 |
 |--------|--------|
-| 节点快捷键用 `IHotkeyFeature` + `HotkeyExtension.HotkeyProperty` | 在插件内 new `LowLevelKeyboardHook` / 重复 Start 键盘 Hook |
+| 节点快捷键用 `IHotkeyFeature` + `HotkeyExtension.HotkeyProperty` | 为插件私建 `LowLevelKeyboardHook` 或停止宿主共享 Hook |
 | 挂树后热键自动生效；改 EAV 后自动重注册 | 硬编码 Win32 `RegisterHotKey` 与宿主热键冲突 |
 | 自定义 Handler 设置合理 `InputHandlerOrder` | Order 随意导致拦截宿主热键或搜索框 |
-| `StopCoreAsync` 注销 Handler / 手动 Register 的热键 | 插件卸载后仍留 Handler 或占用热键 Id |
+| 生命周期组件停止时注销 Handler / 手动 Register 的热键并退订 | 停止共享 Hook、全局 Clear 或插件卸载后仍留注册 |
 | 用 `KeyCode` + `HotKeyInfo.TypeExactMatch` 定义组合 | 发明未文档化的 HotKey 匹配类型 |
 
 ---
@@ -287,4 +350,4 @@ Hook 与热键服务注册在宿主全局容器中，不在插件 `RegisterServi
 ## 9. 相关
 
 - Feature 摘要：[features.md](features.md) § IHotkeyFeature
-- 服务解析：`MioIoc`（宿主）vs 插件 `RegisterBase<T>.Instance.ComponentContext` — 见 [plugin-core.md](plugin-core.md) § 宿主 IoC vs 插件 IoC
+- 服务解析：统一使用插件 DI — 见 [plugin-core.md](plugin-core.md) § 统一使用插件 DI

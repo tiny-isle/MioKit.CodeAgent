@@ -11,7 +11,7 @@
 |------|------|
 | 前端源码与开发 | `plugin/vue-ui/`（`pnpm dev` / `pnpm build`） |
 | 发布静态资源 | `plugin/ui/dist/`（模板 Vite `outDir` 已指向 `../ui/dist`；csproj `Content Include="ui\dist\**"`） |
-| 运行时加载 | `AppContext.BaseDirectory` 下 `ui/dist/index.html` |
+| 运行时加载 | 当前插件 `IPluginContext.PluginPath` 下 `ui/dist/index.html` |
 
 ---
 
@@ -131,6 +131,8 @@ C# / AXAML 参考生成项目内的 `plugin/Views/PluginWebView.*`、`plugin/Ser
 参考生成项目 `plugin/Services/TimerJsService.cs`：
 
 ```csharp
+using MioKit.Webview2.Core;
+
 [JsService("MyUiService")]
 public partial class MyUiService : ObservableObject
 {
@@ -165,6 +167,52 @@ services.AddSingleton<MyUiService>();
 await webView.InitializeBridgeAsync(services, serviceProvider);
 ```
 
+### 插件任务与通知的注入
+
+任务服务需要 SDK 1.2.3+；宿主 Toast 需要 SDK 1.3.0+ 和对应宿主，且同步基准尚未核实
+1.3.0 发布状态。版本及生命周期分别见核心 skill 的
+[managed-tasks.md](../../miokit-plugin-core/references/managed-tasks.md) 和
+[toast.md](../../miokit-plugin-core/references/toast.md)。
+
+```csharp
+using MioKit.Sdk;
+using MioKit.Webview2.Core;
+
+[JsService("PluginFeedback")]
+public sealed class PluginFeedbackJsService(IMioTaskService tasks, IToastService toasts)
+{
+    public Guid NotifySaved() => toasts.Show("保存成功", ToastLevel.Success);
+
+    public Task<string> ReadAsync(string path) => tasks.RunAsync(
+        new MioTaskOptions { Name = "读取文件", Description = path },
+        ct => File.ReadAllTextAsync(path, ct));
+}
+```
+
+先在插件 `RegisterService` 中把业务类 `AsSelf().SingleInstance()` 注册，由插件 Scope
+提供绑定的任务/通知服务。模板 View 自建的 `ServiceCollection` 不会自动继承插件 Scope；
+桥接时显式复用插件已解析的业务实例，不能直接在空的新 provider 中构造它：
+
+```csharp
+using Autofac;
+using Microsoft.Extensions.DependencyInjection;
+
+// pluginScope 是当前插件 ComponentContext；WebView 为 MioWebview2。
+var services = new ServiceCollection();
+services.AddSingleton(pluginScope.Resolve<PluginFeedbackJsService>());
+var serviceProvider = services.BuildServiceProvider();
+await WebView.InitializeBridgeAsync(services, serviceProvider);
+```
+
+View 保留自建 provider，在 WebView 结束使用后释放；插件 Scope 拥有复用的业务实例。
+不要另注册 `IToastService` / `IMioTaskService` 的替代实现，也不要通过 `MioIoc` 根实例
+绕过插件归属。Vue 可 `await vm.Methods.NotifySaved()` / `ReadAsync(path)`；公开方法只
+接受/返回可序列化数据，不暴露服务对象、`ContentFactory` 或操作委托。
+
+bridge 不注入 `CancellationToken`，因此上例不对外暴露 token；任务委托使用宿主提供的
+token，插件停止时仍能协作取消。页面单独关闭不等于插件停止，需要页面级取消时由业务
+显式维护操作 ID/取消入口。委托、进度与自定义 Avalonia 内容在 C# 侧构建。
+
 ### 4.2 Avalonia 嵌入 MioWebview2
 
 参考生成项目 `plugin/Views/PluginWebView.axaml` · `PluginWebView.axaml.cs`：
@@ -181,8 +229,12 @@ await WebView.InitializeBridgeAsync(services, sp);
 WebView.Source = new Uri("http://localhost:5173");
 
 // 发布：本地构建产物
-// WebView.Source = new Uri(Path.Combine(AppContext.BaseDirectory, "ui", "dist", "index.html"));
+// WebView.Source = new Uri(Path.Combine(pluginContext.PluginPath, "ui", "dist", "index.html"));
 ```
+
+`pluginContext` 为当前插件的 `IPluginContext`。模板示例使用的 `AppContext.BaseDirectory`
+属于宿主进程目录，在独立安装或调试插件目录中不保证指向插件；实际发布加载应使用
+插件 Context 路径，不依赖宿主工作目录。
 
 | API | 说明 |
 |-----|------|
@@ -312,7 +364,7 @@ pnpm dev      # http://localhost:5173 — 浏览器中 bridge 不可用
 pnpm build    # 输出到 ../ui/dist，即 plugin/ui/dist/
 ```
 
-C# 开发时 `WebView.Source = http://localhost:5173`；发布时加载 `ui/dist/index.html`（相对 `AppContext.BaseDirectory`）。
+C# 开发时 `WebView.Source = http://localhost:5173`；发布时加载 `ui/dist/index.html`（相对当前插件 `IPluginContext.PluginPath`）。
 
 须在 **WebView2 环境**（`window.chrome.webview` 存在）中测试桥接；浏览器单独打开无法连 .NET。
 

@@ -175,6 +175,31 @@ if (node.TryMatch(request.SearchText!, out var match, out var title)) { ... }
 
 用户选中并执行（回车/运行）时调用。`InvokeContext` 携带 `InvocationSnapshot`（环境快照）、来源与可选 `SearchResult` → [invocation-snapshot.md](invocation-snapshot.md)。
 
+需要把执行登记为可查询、可取消且随插件停止排空的任务时，使用
+[managed-tasks.md](managed-tasks.md) 的插件绑定 `IMioTaskService`；入口签名不变，
+宿主不会自动托管所有节点调用。节点面板分类使用
+[node-drag-drop.md](node-drag-drop.md) 的显式标记。
+
+### IRequireTargetWindowFeature（启动器目标窗口）
+
+SDK 1.2.2+ 的标记接口，继承 `IInvokeFeature`，没有新增方法或 EAV。
+声明后，启动器执行前必须成功激活并确认捕获的目标窗口；无目标、目标关闭/被替换或
+无法取得前台时，中止执行并提示用户。普通 `IInvokeFeature` 节点会尝试切换目标，
+但目标缺失或激活失败仍可执行。
+
+```csharp
+// 放入已有节点类；构造函数、MioType、注册保持原实现。
+// public sealed class PasteNode : MioObject, IRequireTargetWindowFeature
+public Task InvokeAsync(InvokeContext context)
+{
+    // 启动器入口已经验证目标；实际业务在这里执行。
+    return Task.CompletedTask;
+}
+```
+
+该标记只由启动器消费，不改变搜索框、结果动作和全局热键的调用规则；这些入口仍需
+业务自行验证需要的环境。不要据此假定所有 `InvokeAsync` 都有可用目标窗口。
+
 ---
 
 ## IPinnedFeature
@@ -227,7 +252,8 @@ this.InvalidateIcon();
 
 `Owned` 用于本次调用新建且应随控件释放的图片，引用计数资源使用
 `IconLease.Create(image, release)`。Provider 由宿主在后台调度，不能依赖 UI 线程；
-返回 `null`、抛出异常或加载失败时，UI 会继续尝试祖先 Provider 并最终显示 MioKit 默认图标。
+返回 `null` 时继续尝试祖先 Provider，全部无图后显示 MioKit 默认图标。
+Provider 抛出异常会记录日志并进入默认图路径；取消则不应用本次结果。
 图标缓存、在线来源与 lease 规则 → [sdk-helpers.md](sdk-helpers.md)。
 
 ---

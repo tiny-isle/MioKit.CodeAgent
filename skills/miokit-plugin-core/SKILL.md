@@ -1,13 +1,14 @@
 ---
 name: miokit-plugin-core
 description: >-
-  MioKit 已有插件项目的核心开发规范。用于插件入口、plugin.json、RegisterBase、PluginBase、DI、生命周期、MioObject 节点、Feature、EAV、搜索、宿主服务、输入 Hook、NuGet 依赖、打包和验包；当工作区已经存在 plugin/plugin.json 或插件 Register 类时使用。新建插件解决方案请使用 miokit-plugin-new；Avalonia AXAML 使用 miokit-plugin-avalonia-ui；MioWebview2、JsService 或 Vue 使用 miokit-plugin-webview2。
+  MioKit 已有插件项目的核心开发规范。用于插件入口、DI、生命周期、MioObject 节点、Feature、EAV、搜索、节点拖放、托管任务、Toast 通知、宿主服务、输入 Hook、依赖和打包；当工作区已有 plugin/plugin.json 或插件 Register 类时使用。新建解决方案使用 miokit-plugin-new；Avalonia AXAML 使用 miokit-plugin-avalonia-ui；MioWebview2、JsService 或 Vue 使用 miokit-plugin-webview2。
 ---
 
 # MioKit 插件核心开发
 
 本 Skill 负责已有 MioKit 插件项目的非 UI 能力。参考文档同时包含 API 约定和使用规范，
-它们是实现插件时的规范真源。
+它们是实现插件时的规范依据；同步基准与新增 API 版本边界见
+[sdk-api-index.md](references/sdk-api-index.md)。确认当前依赖与宿主支持后再使用新增能力。
 
 **上下文边界：** 先从主题索引打开与当前改动直接对应的一篇文档。只有它明确链接的能力
 也是当前任务的一部分时，才继续打开下一篇；不要预读节点、Feature、搜索或 EAV 文档。
@@ -33,7 +34,8 @@ using MioKit.Sdk;
 ```
 
 不要根据磁盘目录臆造命名空间。`MioKit.Sdk.Controls` 只包含少数 Avalonia 控件；
-`MioWebview2` 和 `[JsService]` 位于 `MioKit.Webview2`，详见 WebView2 Skill。
+`MioWebview2` 位于 `MioKit.Webview2`，`[JsService]` / `ServiceBridge` 位于
+`MioKit.Webview2.Core`，详见 WebView2 Skill。
 
 ## 阅读流程
 
@@ -55,6 +57,7 @@ using MioKit.Sdk;
 | 插件入口、DI、生命周期 | [plugin-core.md](references/plugin-core.md) |
 | `plugin.json` | [plugin-json.md](references/plugin-json.md) |
 | 节点、挂树、数据访问 | [nodes-and-tree.md](references/nodes-and-tree.md) |
+| 节点面板分类与拖放协议 | [node-drag-drop.md](references/node-drag-drop.md) |
 | Feature（先选基础或搜索/UI） | [features.md](references/features.md) |
 | EAV、Setting、Memory（先选定义或高级） | [extension-properties.md](references/extension-properties.md) |
 | 搜索 | [search.md](references/search.md) |
@@ -63,6 +66,8 @@ using MioKit.Sdk;
 | 调用快照 | [invocation-snapshot.md](references/invocation-snapshot.md) |
 | 跨插件方法调用 | [plugin-calls.md](references/plugin-calls.md) |
 | 宿主服务和事件 | [host-services.md](references/host-services.md) |
+| 托管任务、查询与协作取消 | [managed-tasks.md](references/managed-tasks.md) |
+| 宿主 Toast 通知、进度与操作 | [toast.md](references/toast.md) |
 | 输入 Hook 和热键 | [input-hooks.md](references/input-hooks.md) |
 | SDK 辅助 API 和反模式 | [sdk-helpers.md](references/sdk-helpers.md) |
 | NuGet 与加载边界 | [nuget.md](references/nuget.md) |
@@ -77,7 +82,13 @@ using MioKit.Sdk;
   具体的 `IRegister` / `IPlugin` 实现，且具体插件类型已注册到插件 IOC。
 - [ ] 后台逻辑通过 `IPluginLifecycleComponent` 注册，不塞进
   `StartCoreAsync` 或 `StopCoreAsync`。
-- [ ] 宿主服务使用 `MioIoc.Resolve<T>()`；插件私有服务使用插件容器。
+- [ ] 插件代码统一从插件 DI 获取服务，优先构造注入；插件 Scope 继承宿主全局注册，
+  无需按服务的注册位置选择容器。方法内解析使用插件容器；
+  节点/回调可用 `PluginContext.GetRequiredService<T>()`；`Context.Icons` 已弃用。
+- [ ] 通用 Context 服务入口需要对应的 1.3.0 开发版；不在 RegisterService 中提前解析，
+  不释放宿主管理的 Scope，卸载后不再使用旧 Context 解析服务。
+- [ ] 托管任务响应任务 token，能在停止钩子执行前退出；新增 API 的依赖和
+  `minSdkVersion` 与实际使用能力一致。
 - [ ] 搜索组实现 `ISearchableFeature`，可执行节点实现 `IInvokeFeature`，启动后调用
   `EnsureTreeLoadedAsync`。
 - [ ] EAV / Memory / Setting 选择符合 [extension-properties.md](references/extension-properties.md)。

@@ -147,6 +147,12 @@ Popup/Flyout 的阴影若由内部 `Border` 绘制，把
 这适用于 Ghost、Link、Outline、列表行、日历项、命令项等“空闲透明、状态显色”的视觉。
 卡片、输入框、Popup、菜单表面、进度轨道等真实表面不使用这个模式。
 
+Shadcn 1.2.3 的 `MultiComboBoxItem`、`PaginationButton` 已使用独立的
+`Border#PART_Background` 承载状态透明度；不要把控件整体 `Opacity` 改为 0，否则文字
+和交互内容也会消失。`SplitButton.Ghost` 的主/次按钮和 Flyout 打开状态已由主题各自
+管理，优先使用内置 `Ghost`，不要用多层 `/template/` 选择器穿透内部 Button。
+滚动条翻页 RepeatButton 使用独立透明主题，不把它改回普通带背景按钮。
+
 ## 局部 Style 约定
 
 - 插件特有外观放在 View/控件的局部 `Styles` 中，选择器带控件类型或专用 class，避免

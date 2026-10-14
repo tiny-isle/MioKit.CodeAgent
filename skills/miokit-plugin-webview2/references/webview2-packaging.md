@@ -12,7 +12,9 @@ pnpm build
 ```
 
 模板的 Vite `outDir` 应指向 `../ui/dist`。运行时从插件输出目录的
-`ui/dist/index.html` 加载前端资源；开发时可以将 `MioWebview2` 指向本地开发服务器。
+`ui/dist/index.html` 加载前端资源（基于 `IPluginContext.PluginPath`）；
+`AppContext.BaseDirectory` 是宿主进程目录，独立插件安装/调试时不能代替插件路径。
+开发时可以将 `MioWebview2` 指向本地开发服务器。
 
 ## csproj 约定
 
