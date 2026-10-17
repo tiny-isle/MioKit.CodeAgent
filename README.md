@@ -7,6 +7,7 @@
 ## 目录
 
 ```text
+marketplace.json         根目录 marketplace（部分 IDE 直接读根路径）
 .cursor-plugin/         Cursor marketplace + 插件清单（从文件夹导入用）
 .agents/plugins/         Codex marketplace 清单
 .codex-plugin/           Codex 插件清单
@@ -23,13 +24,13 @@ Skill 对应 MioKit 1.3 系列的公开插件 API，包括插件 Scope 服务、
 
 ## 作为 Cursor / Codex 插件安装
 
-这是同时获得 Skill 和 MCP 的方式。Cursor 从文件夹导入时读 `.cursor-plugin/marketplace.json`；Codex 市场读 `.agents/plugins/marketplace.json`，安装后读 `.codex-plugin/plugin.json`。Skill 在 `skills/`，MCP 由 `mcp.json` / `.mcp.json` 启动。
+这是同时获得 Skill 和 MCP 的方式。部分 IDE 直接读根目录 `marketplace.json`；Cursor 从文件夹导入时读 `.cursor-plugin/marketplace.json`；Codex 市场读 `.agents/plugins/marketplace.json`，安装后读 `.codex-plugin/plugin.json`。Skill 在 `skills/`，MCP 由 `mcp.json` / `.mcp.json` 启动。
 
 本机需要 Node 20+ 和 .NET 10 SDK。MCP 通过已发布的 `@tiny-isle/miokit-mcp` 启动，不依赖本仓库里的 `mcp/` 源码。
 
 ### Cursor
 
-从文件夹导入的是 marketplace（`.cursor-plugin/marketplace.json`），不是根上的 `plugin.json`。
+从文件夹导入的是 marketplace（优先 `.cursor-plugin/marketplace.json`，部分客户端回退根目录 `marketplace.json`），不是根上的 `plugin.json`。
 
 1. Customize → 从文件夹添加插件 → 选本仓库根目录。
 2. 安装列出的 `miokit-code-agent`。
