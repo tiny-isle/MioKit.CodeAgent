@@ -129,6 +129,10 @@ window.setColorTheme({
   toast.success('操作成功', { description: '已保存' });
   ```
 
+  `vue-sonner` 是当前网页内反馈。需要页面/窗口之外的宿主桌面通知时，由插件 JsService
+  使用插件绑定的 `IToastService`；不要用网页 toast 假定具备插件停止清理、后台通知或
+  全屏免打扰语义。注入及 SDK 1.3.0 条件见 [vue-bridge.md](vue-bridge.md)。
+
 - 优先复用 `components/ui/` 中的组件。删除等不可逆操作使用 `ConfirmPopover`；普通编辑
   使用 `Dialog`；表格使用 `DataTable`（支持 selection、列显隐、分页和左右冻结列）。
 - 图标操作使用 `ActionIcon`，变体为 `default`、`primary`、`success`、`warning`、`error`。

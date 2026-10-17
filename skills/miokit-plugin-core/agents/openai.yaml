@@ -1,4 +1,4 @@
 interface:
   display_name: "MioKit Plugin Core"
-  short_description: "Core MioKit plugin development patterns"
-  default_prompt: "Use $miokit-plugin-core for lifecycle, SDK, nodes, search, services, dependencies, and packaging in an existing MioKit plugin."
+  short_description: "MioKit SDK, nodes, tasks, notifications, and packaging"
+  default_prompt: "Use $miokit-plugin-core for lifecycle, SDK, nodes, drag and drop, search, managed tasks, Toast notifications, input hooks, and packaging in an existing MioKit plugin."

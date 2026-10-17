@@ -53,6 +53,19 @@
 
 以当前模板和宿主兼容约定为准。不要将模板中的所有包都加到插件项目；只有插件代码直接引用某个包的 API 时才添加。
 
+### 新增 SDK 能力与模板滞后
+
+模板默认依赖不保证覆盖当前源码新增 API。能力版本边界集中见
+[sdk-api-index.md](sdk-api-index.md)：目标窗口标记 1.2.2+，托管任务/节点拖放/前台窗口/
+Hook 分发 1.2.3+，Toast 和公开全屏状态 1.3.0+。
+同步基准的模板仍引用 1.2.3，而 SDK 源码已准备 1.3.0；发布状态未核实。
+
+使用 Toast 时，先确认公共源已提供相应包及目标宿主支持，再在原项目显式添加
+`<PackageReference Include="MioKit.Sdk" Version="1.3.0" />`，并把
+`plugin.json.minSdkVersion` 提升到 `1.3.0`。不必为了通知修改入口注册，不要求同步升级
+所有配套包；编译成功也不能代替宿主兼容检查。包尚不可用时如实报告条件未满足，
+不要自行添加本地 nupkg 或私有源。宿主共享 DLL 仍不进插件包。
+
 ---
 
 ## 3. 运行期解析（PluginLoadContext）
@@ -111,9 +124,10 @@
 
 | 场景 | API |
 |------|-----|
-| 宿主全局服务 | `MioIoc.Resolve<T>()` → [host-services.md](host-services.md) |
-| 本插件注册的服务 | `{Plugin}Register.Instance.ComponentContext.Resolve<T>()` |
+| 宿主或插件注册的服务 | 统一优先由插件 DI 构造注入；插件 Scope 继承全局注册 → [host-services.md](host-services.md) |
+| 无 `PluginBase` 引用 | `{Plugin}Register.Instance.ComponentContext.Resolve<T>()` |
 | `PluginBase` 生命周期内 | `Container!.Resolve<T>()` |
+| 仅持有 Context（对应 1.3.0 开发版） | `GetRequiredService<T>()` / `TryGetService<T>()` |
 
 ---
 

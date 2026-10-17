@@ -36,6 +36,16 @@ description: >-
 
 `create_plugin` 会从 nuget.org 检查 / 安装 / 更新 `MioKit.Plugin.Templates`，再生成项目。Agent 不要自行执行 `dotnet new install`、`dotnet new`，也不要从本地文件夹、本地 nupkg 或私有 NuGet 源安装模板。
 
+生成后按实际功能核对依赖与 `minSdkVersion`，不要把模板默认值视为所有新 API 的
+兼容承诺。新增能力及源码/发布边界见
+[核心 API 索引](../miokit-plugin-core/references/sdk-api-index.md)：例如 Toast 需要
+SDK 1.3.0 和对应宿主，模板默认依赖可能仍旧；确认包可用后按核心依赖规范添加直接
+SDK 引用。普通插件不因文档同步而统一升级，包尚不可用时不自行改用本地源。
+
+生成后的业务代码统一从插件 DI 获取服务，优先构造注入；插件 Scope 继承宿主全局
+注册，不需要按服务注册位置选择容器。具体入口与版本条件见核心 Skill 的
+[插件 DI 约定](../miokit-plugin-core/references/plugin-core.md)。
+
 ## 行为约束
 
 - 不要手写或复制插件解决方案骨架。

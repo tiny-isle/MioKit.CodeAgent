@@ -22,9 +22,13 @@
 | `id` | 全局插件 ID；必须等于 `PluginBase(id)`、Const 中的 `PluginId` 与 `Keyed<IPlugin>(id)`。 |
 | `name` | 显示名称。 |
 | `assembly` | 包/插件目录根的入口 DLL 文件名，必须与构建产物一致。 |
-| `minSdkVersion` | 可被 `System.Version` 解析的最低 SDK 版本；按实际调用的 API 设置，使用 1.3 系列新增 API 时写 `1.3.0`。 |
+| `minSdkVersion` | 可被 `System.Version` 解析的最低 SDK 版本；基础模板为 `1.0.0`，使用新增 API 时按能力提升，见 [sdk-api-index.md](sdk-api-index.md)。 |
 
-运行时还支持 `maxSdkVersion`（排他的最高 SDK 版本，必须大于 `minSdkVersion`）和 `dependencies`（依赖的插件 ID 列表）。商店目录还读取 `minHostVersion` / `maxHostVersion` 作兼容性筛选；需要发布到商店时应同时填写这两个宿主版本字段。SDK 编译依赖版本不自动替代这里的兼容范围；使用新类型时不能保留不真实的旧版本下限。例如 `minSdkVersion` `1.0.0`、`maxSdkVersion` `2.0.0` 表示兼容 1.x，不含 2.0.0。
+运行时还支持 `maxSdkVersion`（排他的最高 SDK 版本，必须大于 `minSdkVersion`）和 `dependencies`（依赖的插件 ID 列表）。商店目录还读取 `minHostVersion` / `maxHostVersion` 作兼容性筛选；需要发布到商店时应同时填写这两个宿主版本字段。例如 `minSdkVersion` `1.0.0`、`maxSdkVersion` `2.0.0` 表示兼容 1.x，不含 2.0.0。
+
+最小示例表示清单格式，不代表所有新能力可运行在 SDK 1.0.0。例如使用 Toast 必须写
+`"minSdkVersion": "1.3.0"`，同时还原支持该 API 的包并运行于对应宿主；只改清单不会
+升级编译依赖或宿主实现。未发布能力的条件见 [toast.md](toast.md)。
 
 ## 常用可选字段
 
@@ -53,8 +57,8 @@
   "assembly": "MyPlugin.dll",
   "minSdkVersion": "1.0.0",
   "maxSdkVersion": "2.0.0",
-  "minHostVersion": "1.3.0",
-  "maxHostVersion": "2.0.0",
+  "minHostVersion": "0.2.8",
+  "maxHostVersion": "1.0",
   "dependencies": [],
   "nugetDependents": [
     { "id": "Contoso.MyPrivateLibrary", "version": "2.1.0" }

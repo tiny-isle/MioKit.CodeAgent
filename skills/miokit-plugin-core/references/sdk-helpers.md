@@ -15,12 +15,15 @@
 | 按字段筛选分页 | `IMioDataProvider.SearchAsync` + `EavQuery` → [nodes-and-tree.md](nodes-and-tree.md) §8 |
 | 读前台/剪贴板 | `InvokeContext.Context` → [invocation-snapshot.md](invocation-snapshot.md) |
 | 解析 .lnk / Reveal 文件 | `ShellHelper`（本文 §3） |
-| 结果图标 | `IIconProviderFeature` + `Context.Icons`（本文 §2） |
+| 结果图标 | `IIconProviderFeature` + 插件 DI 的 `IPluginIconService`（本文 §2） |
 | 插件窗口使用插件图标 | `PluginWindowExtensions.SetPluginIcon`（本文 §4） |
 | Alt 菜单 / 固定忽略别名热键 | 内置 `*Action.Instance` → [result-action.md](result-action.md) |
 | 类体内读写 EAV | `this.GetXxx()` / `this.SetXxx()` → [extension-properties.md](extension-properties.md) |
 | 单例设置窗口 | `WindowManager.ShowUniqueWindow<T>()`（本文 §4） |
-| 宿主服务 | `MioIoc.Resolve<T>()` → [plugin-core.md](plugin-core.md) |
+| 宿主与插件服务 | 统一从插件 DI 构造注入或使用插件容器 → [plugin-core.md](plugin-core.md) |
+| 插件托管任务 / 宿主通知 | 插件绑定 `IMioTaskService` / `IToastService` → [managed-tasks.md](managed-tasks.md)、[toast.md](toast.md) |
+| 前台窗口持续观察 | `IForegroundWindowMonitor` → [invocation-snapshot.md](invocation-snapshot.md) |
+| 节点面板拖放 | `MioDragProtocol` / `MioNodeDragDrop` → [node-drag-drop.md](node-drag-drop.md) |
 | 插件私有服务 | `XxxRegister.Instance.ComponentContext.Resolve<T>()` |
 | 附着 + 多组范围搜索 | `SearchScopeFeatureBase` → [attach-search-panel.md](attach-search-panel.md) |
 
@@ -62,11 +65,33 @@ ValueTask<IIconLease?> GetIconAsync(
 - WebView2 使用同名 `DataUrl` 属性，例如 `IconSource.FolderDataUrl`。
 - 系统图标获取失败时由宿主自动使用内置资源回退；插件无需自行探测 Windows DLL 或维护回退文件。
 
-### `IPluginContext.Icons`（所有者绑定）
+### 插件 DI 的 `IPluginIconService`（所有者绑定）
 
-插件通过 `PluginBase.Context.Icons` 获取 `IPluginIconService`。该实例的 `OwnerId`
+支持图标 DI 注册的 1.3.0 开发版本宿主中，业务服务构造注入 `IPluginIconService`；
+`PluginBase` 方法内也可通过 `Container!.Resolve<IPluginIconService>()` 获取。
+包含通用入口的 1.3.0 开发版本中，仅有 Context 时可用
+`context.GetRequiredService<IPluginIconService>()`，与构造注入解析同一个绑定实例。
+该实例的 `OwnerId`
 固定为当前插件 ID：插件可以读取共享图标，但只能创建、覆盖或删除自己的记录，且没有全库重建入口。
 不要通过 `MioIoc.Resolve<IIconService>()` 访问兼容外壳；它仅用于旧插件和宿主迁移。
+
+```csharp
+using MioKit.Sdk;
+
+// 只在现有 RegisterService 中注册该业务服务，图标服务由宿主注入插件 Scope。
+public sealed class PluginIconReader(IPluginIconService icons)
+{
+    public ValueTask<IIconLease?> OpenAsync(string iconId, IconRequest request, CancellationToken ct) =>
+        icons.OpenStoredAsync(iconId, request, ct);
+}
+```
+
+宿主创建的 Context 兼容属性与 DI 指向同一个所有者绑定实例。`Context.Icons` 已标记
+`Obsolete`（警告，非错误），保持原 getter 供旧插件二进制使用，不删除或更换返回类型。
+旧宿主未提供图标 DI 注册时仍需旧入口；新插件采用 DI 时声明 `minSdkVersion = 1.3.0`
+并确认目标宿主已包含该注册。此改动尚未核实发布状态，不能假定已有的 1.3.0 构建都支持。
+任务/通知同样优先插件 DI；Context 统一使用 `IPluginServiceContext` 通用解析，
+不再为任务等服务分别增加 Context 接口。详见 [host-services.md](host-services.md)。
 
 | 成员 | 说明 |
 |------|------|
@@ -169,14 +194,18 @@ Behavior 在窗口 `Opened` 后依次：`SetOwnerId` → `SetAppUserModelId` →
 
 ## 5. 宿主可 Resolve 服务
 
-通过 **`MioIoc.Resolve<T>()`**。插件私有服务用插件容器，见 [plugin-core.md](plugin-core.md)。
+以下宿主服务与插件私有服务统一从插件 DI 获取，优先构造注入，也可在方法内使用
+插件容器。插件 Scope 继承全局注册，且会解析宿主绑定的
+`IPluginIconService` / `IMioTaskService` / `IToastService`，无需按注册位置选择入口，见
+[host-services.md](host-services.md)。根任务/通知服务为应用范围，不作为插件兼容回退。
 
 | 分类 | 接口 |
 |------|------|
 | 数据 | `IMioDataProvider` |
 | 搜索 | `ITextMatcher`、`IInvocationSnapshotProvider`、`ISearchPipelineRegistry`（少见） |
 | 输入 | `IGlobalHotKeyService`、`IKeyboardHook`、`IMouseHook` |
-| UI | `ISearchBoxWindow`、`IFocusRequestService`、`ISearchBoxFocusTargetProvider`、`IImageService`；图标使用 `Context.Icons` |
+| 前台观察 | `IForegroundWindowMonitor`（1.2.3+）；不是完整环境快照 |
+| UI | `ISearchBoxWindow`、`IFocusRequestService`、`ISearchBoxFocusTargetProvider`、`IImageService`；图标使用插件绑定的 `IPluginIconService` |
 | 基础设施 | `IMioEventBus`；业务日志优先 `IPluginContext.Logger` |
 
 | 勿依赖 | 原因 |
@@ -185,11 +214,15 @@ Behavior 在窗口 `Opened` 后依次：`SetOwnerId` → `SetAppUserModelId` →
 | `RegisterService` 注册的类型 | 仅插件子容器，不能 `MioIoc.Resolve` |
 | `ILocalWebhostClient` | 可选；Resolve 前 `IsRegistered` |
 
-Keyed：`MioIoc.ResolveKeyed<IPlugin>(pluginId)` 取其他已加载插件（慎用）。
+跨插件调用使用 [plugin-calls.md](plugin-calls.md) 的公开方法调用机制，避免直接解析
+其他插件实例并持有跨生命周期引用。
 
 ### `MioAppContext.Current`
 
 `RootNode` · `EventBus` · `Environment` · `FrameworkLogger` · `IntPtr` · `HostVersion` / `SdkVersion`
+
+SDK 1.3.0+ 还公开只读 `IsExternalForegroundFullscreen`，不代表用户免打扰设置，
+没有插件公开的状态变化事件；详见 [invocation-snapshot.md](invocation-snapshot.md)。
 
 ### `IMioEventBus`
 

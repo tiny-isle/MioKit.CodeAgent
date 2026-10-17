@@ -181,7 +181,7 @@ public sealed class OpenDataFolderAction : SearchResultActionBase
 
 如果一个插件需要为另一个插件的节点追加操作，不要让目标节点实现调用方插件的
 `IResultActionProviderFeature`。使用宿主全局的
-`IResultActionExtensionRegistry`，按目标节点的稳定 `MioType`，或按
+`IResultActionExtensionRegistry`（从插件 DI 构造注入），按目标节点的稳定 `MioType`，或按
 `MioKit.Sdk` 公开的稳定 Feature 注册 `IResultActionExtensionHandler`。
 
 ### 注册与释放
@@ -193,12 +193,15 @@ using MioKit.Sdk;
 
 public sealed class ResultActionExtensionComponent : IPluginLifecycleComponent
 {
+    private readonly IResultActionExtensionRegistry _registry;
     private IDisposable? _registration;
+
+    public ResultActionExtensionComponent(IResultActionExtensionRegistry registry)
+        => _registry = registry;
 
     public Task StartAsync(CancellationToken cancellationToken = default)
     {
-        var registry = MioIoc.Resolve<IResultActionExtensionRegistry>();
-        _registration = registry.Register(
+        _registration = _registry.Register(
             targetMioType: TargetPluginConst.TargetNodeType,
             handler: new TargetNodeActionHandler(),
             priority: 0);

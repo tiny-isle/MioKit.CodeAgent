@@ -208,9 +208,9 @@ Shad 主题配置，无需重复设置。
 
 | API | 适用时机 | 注意 |
 |---|---|---|
-| `control.GetShadDialogManager()` | 从已挂到视觉树的控件打开 Dialog | 顶层必须是含 `ShadDialogHost` 的 `ShadWindow` |
-| `control.GetShadDrawerManager()` | 打开 Drawer | 顶层必须含 `ShadDrawerHost` |
-| `control.GetShadToastManager()` | 发布 Toast | 顶层必须含 `ShadToastHost` |
+| `control.GetShadDialogManager()` | 从已挂到视觉树的控件打开 Dialog | 解析出的 Hosts 必须含 `ShadDialogHost` |
+| `control.GetShadDrawerManager()` | 打开 Drawer | 解析出的 Hosts 必须含 `ShadDrawerHost` |
+| `control.GetShadToastManager()` | 发布窗口内 Toast | 解析出的 Hosts 必须含 `ShadToastHost`；不同于宿主 `IToastService` |
 | `control.GetShadWindow()` | 从当前控件取得顶层 `ShadWindow` | 未挂到对应视觉树时返回 `null` |
 | `control.FindShadHost<T>()` / `GetRequiredShadHost<T>()` | 查找自定义或内置 Host | `Find` 返回 `null`；`Required` 缺失时抛异常 |
 | `control.FindRequiredControl<T>(name)` | 自定义控件模板/名称作用域中的必需部件 | 找不到会抛异常；普通 View 优先 `x:Name` 生成字段或绑定 |
@@ -223,8 +223,15 @@ Shad 主题配置，无需重复设置。
 | `EnumExtensions.GetValues<T>()` | 枚举选择项 | `orderByName=true` 才按名称排序；默认保持枚举声明顺序 |
 | `flags.GetSetFlags()` | 展开 `[Flags]` 枚举 | 值为 0 的枚举项总会匹配；需要排除时用 `GetSetFlagsIgnoring` |
 
-Host manager 必须从当前 View/Control 取得，不要存进 ViewModel。窗口和宿主 Host 的完整
-配置见 [avalonia-controls.md](avalonia-controls.md)。
+Shadcn 1.2.3 基准下，Host 查找先使用顶层 `ShadWindow.Hosts`；顶层不是 ShadWindow 时，
+查找当前控件所在的 `ShadMainHost`，再回退到同一 TopLevel 中首个 `ShadMainHost` 的
+Hosts。顶层是 ShadWindow 但缺少目标 Host 时不会继续回退。`FindShadHost<T>()` 可为空，
+`GetRequiredShadHost<T>()` / manager 获取在缺失时抛异常。`GetShadWindow()` 本身仍只
+返回顶层 ShadWindow，不因存在 ShadMainHost 而成功。
+
+Host manager 从当前已挂树的 View/Control 取得，不要存进 ViewModel。
+宿主桌面 `IToastService` 无此视觉树要求，可注入业务服务/ViewModel。
+窗口与通知的完整约定见 [avalonia-controls.md](avalonia-controls.md)。
 
 ### 控件、Behavior 与主题实现
 

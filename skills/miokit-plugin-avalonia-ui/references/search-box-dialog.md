@@ -28,7 +28,7 @@ void ResetOverlay(); // 关闭 Dialog / ActionBar
 | 场景 | 做法 |
 |------|------|
 | 搜索结果 Alt 操作需要编辑别名 / 热键 / 参数 | 在 action 的 `ExecuteAsync` 中解析 `ISearchBoxWindow` 并 `TryShowDialogAsync` |
-| Dialog 需要关闭按钮 | 控件内调用 `MioIoc.Resolve<ISearchBoxWindow>().ResetOverlay()` |
+| Dialog 需要关闭按钮 | 调用由插件 DI 提供的 `ISearchBoxWindow.ResetOverlay()` |
 | Dialog 打开后需要指定初始焦点 | 控件实现 `ISearchBoxFocusTargetProvider.RequestInitialFocus()` |
 | Dialog 有确认 / 取消结果 | 控件实现 `IDialogContext` 并触发 `DialogComplete` |
 
@@ -43,11 +43,16 @@ void ResetOverlay(); // 关闭 Dialog / ActionBar
 
 ```csharp
 using Lucide.Avalonia;
+using MioKit.Sdk;
+using MioKit.Sdk.Controls;
 
 public sealed class EditAliasAction : SearchResultActionBase
 {
-    public EditAliasAction()
+    private readonly ISearchBoxWindow _searchBox;
+
+    public EditAliasAction(ISearchBoxWindow searchBox)
     {
+        _searchBox = searchBox;
         Text = "别名管理";
         Icon = LucideIconKind.Tags;
     }
@@ -65,13 +70,14 @@ public sealed class EditAliasAction : SearchResultActionBase
             AliasNameNode = aliasNode
         };
 
-        await MioIoc.Resolve<ISearchBoxWindow>()
-            .TryShowDialogAsync(dialog, cancellationToken);
+        await _searchBox.TryShowDialogAsync(dialog, cancellationToken);
     }
 }
 ```
 
-推荐从核心 Skill 的 `IResultActionProviderFeature.GetActionAsync` 返回 action，让用户按 Alt 打开操作弹层后执行 Dialog。Action 规范见 `miokit-plugin-core` 的 `result-action.md`。
+由插件 DI 创建 Action，或创建时传入已从插件 DI 获取的 `ISearchBoxWindow`，再从
+`IResultActionProviderFeature.GetActionAsync` 返回。插件 Scope 会继承宿主窗口服务注册。
+用户按 Alt 打开操作弹层后执行 Dialog。Action 规范见核心 Skill 的 `result-action.md`。
 
 ---
 
@@ -84,10 +90,12 @@ using Ti.Avalonia.Shadcn.Models;
 
 public partial class MyDialog : UserControl, IDialogContext, ISearchBoxFocusTargetProvider
 {
+    private readonly ISearchBoxWindow _searchBox;
     public event EventHandler<DialogResult>? DialogComplete;
 
-    public MyDialog()
+    public MyDialog(ISearchBoxWindow searchBox)
     {
+        _searchBox = searchBox;
         InitializeComponent();
     }
 
@@ -98,10 +106,13 @@ public partial class MyDialog : UserControl, IDialogContext, ISearchBoxFocusTarg
 
     private void Close()
     {
-        MioIoc.Resolve<ISearchBoxWindow>().ResetOverlay();
+        _searchBox.ResetOverlay();
     }
 }
 ```
+
+该示例由插件 DI 或运行时组合代码创建 Dialog，并传入窗口服务。若 AXAML/设计器需要
+无参构造，保留设计时构造路径，将运行时服务通过 ViewModel 或显式初始化传入。
 
 | 接口 | 作用 |
 |------|------|

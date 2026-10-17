@@ -3,7 +3,7 @@ name: miokit-plugin-avalonia-ui
 description: >-
   MioKit 插件的 Avalonia UI 开发规范。用于 .axaml、Avalonia UserControl/Window、
   Ti.Avalonia.Shadcn、Behavior、附加属性、CommunityToolkit.Mvvm、DynamicResource
-  主题、MioKit.Sdk.Controls、Preview、Dialog、插件窗口、图标和 UI 线程问题；通常与
+  主题、MioKit.Sdk.Controls、节点拖放接收、Toast 内容、Preview、Dialog、插件窗口、图标和 UI 线程问题；通常与
   miokit-plugin-core 一起使用。不要用于 MioWebview2、JsService 或 Vue 前端。
 ---
 
@@ -26,7 +26,8 @@ description: >-
 - [styles-and-effects.md](references/styles-and-effects.md)：当前主题已验证的 `Classes`、
   常用控件组合、局部样式、阴影、焦点与透明状态效果。
 - [search-box-dialog.md](references/search-box-dialog.md)：SearchBox Dialog、焦点、键盘和自定义 Dialog 控件。
-- [avalonia-controls.md](references/avalonia-controls.md)：MioKit 控件、插件窗口、Avalonia 图像和 UI 辅助 API。
+- [avalonia-controls.md](references/avalonia-controls.md)：MioKit 控件、插件窗口、节点拖放接收、
+  Toast 内容、Avalonia 图像和 UI 辅助 API。
 - [behaviors-and-attached-properties.md](references/behaviors-and-attached-properties.md)：
   `Ti.Avalonia.Shadcn` / MioKit Behavior、附加属性、常用 C# 扩展和 AXAML 示例。
 - [mvvm.md](references/mvvm.md)：CommunityToolkit.Mvvm、编译绑定、命令、集合、异步、
@@ -50,5 +51,8 @@ description: >-
    自建脱离宿主生命周期的顶层窗口。
 6. 插件 ViewModel 使用 `CommunityToolkit.Mvvm`；AXAML 默认声明 `x:DataType` 并启用
    编译绑定。ViewModel 不持有 `Control` / `Window`，业务动作通过命令和服务完成。
+   服务统一从插件 DI 获取，优先构造注入；插件 Scope 同时继承宿主全局注册。
 7. `Classes` 只使用当前主题已定义且大小写完全一致的变体。自定义透明空闲态通过稳定
    主题画刷背景层的 `Opacity` 表达，不做 `Transparent` 到主题画刷的过渡。
+8. 窗口内 Shadcn Toast 依赖视觉树 Host；宿主桌面通知用插件 Scope 的 `IToastService`，
+   不自行创建通知窗口。节点拖放只解析并绑定当前进程仍挂树的节点。

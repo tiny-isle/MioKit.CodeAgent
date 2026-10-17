@@ -130,9 +130,15 @@ AXAML 与 code-behind 同时创建两个 ViewModel 实例。
 | ViewModel | 可绑定状态、命令、输入校验状态、调用业务服务、取消与错误状态 | 持有 `Control` / `Window`、遍历视觉树、读取 `DynamicResource` |
 | 服务 / Feature | I/O、搜索、持久化、宿主 API、可测试业务逻辑 | 直接更新控件或依赖 View 生命周期 |
 
-Dialog、Drawer 和窗口内部的 Shadcn Toast 需要当前视觉树中的 Host。ViewModel 不应持有这些 manager；可由
+窗口内的 Dialog、Drawer、Shadcn Toast 需要当前视觉树中的 Host。ViewModel 不应持有这些 manager；可由
 View 响应 ViewModel 请求，或注入不暴露 Avalonia 控件的 UI 协调服务。搜索框内 Dialog
 遵循 [search-box-dialog.md](search-box-dialog.md) 的 `ISearchBoxWindow` 生命周期。
+
+宿主桌面通知 `IToastService` 无需 View Host，可通过插件 Scope 注入 ViewModel/业务
+服务；托管任务 `IMioTaskService` 同样使用插件绑定实例。不要通过根容器解析这两个
+接口。异步托管任务先于停止钩子被取消和排空；完整约束见核心 skill 的
+[toast.md](../../miokit-plugin-core/references/toast.md) 与
+[managed-tasks.md](../../miokit-plugin-core/references/managed-tasks.md)。
 
 ## 命令与事件
 
@@ -223,5 +229,3 @@ await Dispatcher.UIThread.InvokeAsync(() =>
 
 这些做法适合 demo，不是 MioKit 插件的默认架构。正式插件保持 ViewModel 与 Avalonia
 控件解耦，并让 DI/导航/窗口服务负责创建和生命周期。
-
-宿主桌面通知使用插件 Scope 中的 IToastService，可直接注入 ViewModel；见 [桌面通知](../../miokit-plugin-core/references/notifications.md)。

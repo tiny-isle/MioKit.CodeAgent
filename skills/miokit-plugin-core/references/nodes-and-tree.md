@@ -4,6 +4,10 @@
 
 > **模板说明：** `dotnet new` 生成的项目**不预置**搜索组或可执行节点；以下示例中的 `DesktopApp*` 等为教学用命名，需自行在 Const、Register 与 `Nodes/` 中实现。
 
+需要让节点在设置中心面板分类、拖到插件窗口绑定时，读
+[node-drag-drop.md](node-drag-drop.md)。`NodePalette` 不替代节点注册/挂树，拖放解析
+只能定位当前进程仍挂树的节点，不携带完整对象快照。
+
 ---
 
 ## 1. MioObject 核心
@@ -329,7 +333,8 @@ public MyGroupNode(string id) : base(id)
 
 ## 8. 数据访问（`IMioDataProvider`）
 
-`Container!.Resolve` / `MioIoc.Resolve<IMioDataProvider>()`。
+统一从插件 DI 获取 `IMioDataProvider`：业务类优先构造注入，`PluginBase` 方法内用
+`Container!.Resolve<IMioDataProvider>()`；节点可用注册器的 `ComponentContext`。
 
 ### 对象 CRUD
 

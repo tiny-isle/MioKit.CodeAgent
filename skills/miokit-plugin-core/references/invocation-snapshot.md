@@ -49,12 +49,65 @@ public interface IInvocationSnapshotProvider
 | `CurrentContext` | 搜索框打开后缓存的快照；未打开时可能为 `null` |
 | `GetContextAsync` | 默认返回缓存；`forceRefresh: true` 时重新采集（热键等需最新前台窗口时） |
 
-宿主在 Autofac 中注册默认实现。插件仅在需要主动刷新环境时解析：
+宿主在 Autofac 中注册默认实现，插件 DI 可继承解析。插件仅在需要主动刷新环境时使用：
 
 ```csharp
-var provider = MioIoc.Resolve<IInvocationSnapshotProvider>();
+// provider 由插件 DI 构造注入 IInvocationSnapshotProvider。
 var snapshot = await provider.GetContextAsync(forceRefresh: true);
 ```
+
+---
+
+## 前台变更通知与实时全屏状态
+
+`IForegroundWindowMonitor`（SDK 1.2.3+）是共享服务，统一从插件 DI 构造注入。
+`CurrentHandle` 为最近观察到的句柄，无前台时是 `0`；`Changed` 参数仅含 `nint Handle`，
+不包含标题/进程，也不等同于已采集的 `InvocationSnapshot`。订阅时不能假定已经收到
+初始通知，宿主启动服务与插件加载可能并行。
+
+```csharp
+using MioKit.Sdk;
+
+public sealed class ForegroundObserver : IPluginLifecycleComponent
+{
+    private readonly IForegroundWindowMonitor _monitor;
+    public ForegroundObserver(IForegroundWindowMonitor monitor) => _monitor = monitor;
+
+    public Task StartAsync(CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        _monitor.Changed += OnChanged;
+        return Task.CompletedTask;
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken = default)
+    {
+        _monitor.Changed -= OnChanged;
+        return Task.CompletedTask;
+    }
+
+    private static void OnChanged(object? sender, ForegroundWindowChangedEventArgs e)
+    {
+        // 只处理轻量句柄状态或投递工作；这里不查询进程、不等待 I/O。
+    }
+}
+```
+
+在插件 `RegisterService` 中注册为 `IPluginLifecycleComponent`，由启停成对订阅/退订。
+回调运行在安装钩子的线程上，必须尽快返回，UI 更新另行调度到 UI 线程；宿主会记录单个
+订阅者异常并继续通知其他订阅者。需要当前完整桌面环境时在回调外按需调用
+`IInvocationSnapshotProvider.GetContextAsync(forceRefresh: true)`；它采集调用时环境，
+不能保证仍对应先前通知的句柄。节点执行仍优先读传入的冻结快照。
+
+SDK 1.3.0+ 的 `MioAppContext.Current.IsExternalForegroundFullscreen` 是当前外部前台
+窗口是否覆盖所在显示器的只读状态；桌面、任务栏和 MioKit 自身窗口不计入。
+它不是快照字段，不表示用户已开启免打扰，也没有插件公开的变化事件。
+`IsFullscreenDoNotDisturbEnabled`、`IsFullscreenDoNotDisturbActive` 和
+`FullscreenDoNotDisturbChanged` 均为宿主内部成员，插件不能调用。
+版本发布条件见 [sdk-api-index.md](sdk-api-index.md)。
+
+启动器的目标窗口强制要求由 `IRequireTargetWindowFeature` 表达，见
+[features-basics.md](features-basics.md)；不改变其他调用入口的快照约定。
 
 ---
 

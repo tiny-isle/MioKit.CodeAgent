@@ -4,7 +4,7 @@
 
 | 当前任务 | 阅读 |
 |---|---|
-| 定义节点、内存节点、名称/别名、热键、搜索组、执行、启动器目标窗口、置顶、最近使用或图标 | [features-basics.md](features-basics.md) |
+| 定义节点、内存节点、名称/别名、热键、搜索组、执行、启动器目标窗口标记、置顶、最近使用或图标 | [features-basics.md](features-basics.md) |
 | 入口交互意图、执行前收起搜索窗或继续面板 | [invocation-presentation.md](invocation-presentation.md)（`IInvocationPresentationFeature`） |
 | 搜索结果操作、附着搜索框、作用域、插件启用状态、窗口状态或 Feature 组合 | [features-search-and-ui.md](features-search-and-ui.md) |
 | 定义自有 Feature 的 EAV / Memory 属性 | [extension-properties-basics.md](extension-properties-basics.md)；复杂缓存或设置页再读 [extension-properties-advanced.md](extension-properties-advanced.md) |

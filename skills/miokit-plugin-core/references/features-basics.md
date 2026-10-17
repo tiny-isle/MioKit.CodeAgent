@@ -176,7 +176,10 @@ if (node.TryMatch(request.SearchText!, out var match, out var title)) { ... }
 用户选中并执行（回车/运行）时调用。`InvokeContext` 携带 `InvocationSnapshot`（环境快照）、来源与可选 `SearchResult` → [invocation-snapshot.md](invocation-snapshot.md)。
 
 需要声明执行前收起入口或继续面板交互时，组合实现 `IInvocationPresentationFeature` →
-[invocation-presentation.md](invocation-presentation.md)。
+[invocation-presentation.md](invocation-presentation.md)。需要把执行登记为可查询、可取消且随插件停止排空的任务时，使用
+[managed-tasks.md](managed-tasks.md) 的插件绑定 `IMioTaskService`；入口签名不变，
+宿主不会自动托管所有节点调用。节点面板分类使用
+[node-drag-drop.md](node-drag-drop.md) 的显式标记。
 
 ---
 
