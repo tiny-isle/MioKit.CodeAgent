@@ -9,6 +9,8 @@ description: >-
 本 Skill 负责已有 MioKit 插件项目的非 UI 能力。参考文档同时包含 API 约定和使用规范，
 它们是实现插件时的规范真源。
 
+参考以 MioKit 1.3 系列公开 API 为基线；插件的最低 SDK / 宿主范围按实际使用能力填写，见 [plugin-json.md](references/plugin-json.md)。
+
 **上下文边界：** 先从主题索引打开与当前改动直接对应的一篇文档。只有它明确链接的能力
 也是当前任务的一部分时，才继续打开下一篇；不要预读节点、Feature、搜索或 EAV 文档。
 一个主题的“路由”页只用于选择其下的一篇细分文档，不替代细分文档本身。
@@ -23,6 +25,7 @@ description: >-
   或 `pnpm` 时，和本 Skill 一起使用 `miokit-plugin-webview2`。
 - 搜索、节点、Feature、服务和插件生命周期始终归本 Skill；不要为这些能力另造 UI
   层实现。
+- 显式登记、查询和取消异步工作时，阅读 [managed-tasks.md](references/managed-tasks.md)。
 
 ## SDK 命名空间约定
 
@@ -61,8 +64,11 @@ using MioKit.Sdk;
 | 附着到搜索框（先选基础或 command） | [attach-search-panel.md](references/attach-search-panel.md) |
 | 结果菜单 | [result-action.md](references/result-action.md) |
 | 调用快照 | [invocation-snapshot.md](references/invocation-snapshot.md) |
+| 入口交互声明 | [invocation-presentation.md](references/invocation-presentation.md) |
 | 跨插件方法调用 | [plugin-calls.md](references/plugin-calls.md) |
 | 宿主服务和事件 | [host-services.md](references/host-services.md) |
+| 桌面 Toast、进度和通知按钮 | [notifications.md](references/notifications.md) |
+| 可选任务登记、运行时长与协作取消 | [managed-tasks.md](references/managed-tasks.md) |
 | 输入 Hook 和热键 | [input-hooks.md](references/input-hooks.md) |
 | SDK 辅助 API 和反模式 | [sdk-helpers.md](references/sdk-helpers.md) |
 | NuGet 与加载边界 | [nuget.md](references/nuget.md) |
@@ -77,7 +83,9 @@ using MioKit.Sdk;
   具体的 `IRegister` / `IPlugin` 实现，且具体插件类型已注册到插件 IOC。
 - [ ] 后台逻辑通过 `IPluginLifecycleComponent` 注册，不塞进
   `StartCoreAsync` 或 `StopCoreAsync`。
-- [ ] 宿主服务使用 `MioIoc.Resolve<T>()`；插件私有服务使用插件容器。
+- [ ] 宿主全局服务使用 `MioIoc.Resolve<T>()`；插件私有服务及绑定所有者的 `IToastService` / `IMioTaskService` 使用插件 Scope 或 Context 扩展。
+- [ ] 可选任务管理使用当前插件 `Context.GetTaskService()` 或 Scope 注入的
+  `IMioTaskService`，不解析根任务服务；委托传递 token 并等待全部工作。
 - [ ] 搜索组实现 `ISearchableFeature`，可执行节点实现 `IInvokeFeature`，启动后调用
   `EnsureTreeLoadedAsync`。
 - [ ] EAV / Memory / Setting 选择符合 [extension-properties.md](references/extension-properties.md)。

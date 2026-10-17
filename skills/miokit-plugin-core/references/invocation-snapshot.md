@@ -71,6 +71,7 @@ var snapshot = await provider.GetContextAsync(forceRefresh: true);
 | `MousePosition` | `MousePosition` | 鼠标屏幕坐标（宿主可按需填充） |
 | `Explorer` | `ExplorerContext?` | 资源管理器窗口列表与活动索引 |
 | `Payload` | `Dictionary<string, object>?` | 插件/宿主扩展键值对 |
+| `CaptureReport` | `InvocationCaptureReport?` | 单项资源采集状态与来源；旧快照可能为 null |
 
 ### 宿主采集规则（SearchRequestCollector）
 
@@ -111,6 +112,10 @@ var hwnd = context.Context?.ForegroundWindow.Handle;
 if (hwnd.HasValue)
     User32.SetForegroundWindow(hwnd.Value);
 ```
+
+搜索和执行读的是采集时刻的快照。要在前台窗口每次切换时收到通知，订阅 `IForegroundWindowMonitor`；它只提供句柄，详情仍用 `IInvocationSnapshotProvider` 按需采集，见 [host-services.md](host-services.md)。
+
+启动器执行实现了 `IRequireTargetWindowFeature` 的节点时，会先切回捕获的目标窗口；失败则不进入 `InvokeAsync`。未实现该标记时，没有有效目标也会执行，此时 `ForegroundWindow.Handle` 为空。见 [features-basics.md](features-basics.md)。
 
 ---
 
@@ -234,6 +239,7 @@ if (context.SearchResult?.Payload is ExplorerWindowInfo info)
 | `Context` | `InvocationSnapshot?` | 环境快照 |
 | `Payload` | `object?` | 调用方附加数据 |
 | `Items` | `IReadOnlyDictionary<string, object?>?` | 附加键值对 |
+| `CancellationToken` | `CancellationToken` | 执行取消令牌；传递给异步操作和托管任务 |
 
 | 工厂方法 | `Context` 来源 |
 |----------|----------------|
@@ -282,7 +288,35 @@ public Task InvokeAsync(InvokeContext context)
 ## 13. 检查清单
 
 - [ ] 环境感知搜索读取 `request.Context`，而非自行 `GetForegroundWindow`
+- [ ] 持续跟踪前台变化用 `IForegroundWindowMonitor`，不要用实时句柄替换当次快照
 - [ ] 区分 `Clipboard.HasData` / `HasFiles` / `Text` 再分支
 - [ ] Explorer 相关逻辑检查 `Explorer?.HasExplorerWindow` 与 `ActiveIndex`
 - [ ] 执行阶段用 `InvokeContext.Context` 或 `SearchResult.Request.Context`（二者在搜索执行时一致）
 - [ ] 跨阶段自定义数据用 `SearchResult.Payload` 或 `InvocationSnapshot.Payload`
+
+## 14. 分阶段采集
+
+上下文由宿主入口提供。搜索框在开始搜索前准备完整上下文，执行结果时复用该结果的
+`SearchRequest.Context`。轮盘和手势展示期间只准备目标窗口/应用信息，确认动作后才
+采集剪贴板、Explorer 等执行资源。因此目标身份来自触发时，非搜索资源来自确认执行时。
+插件只消费传入快照，并处理缺失资源；不要默认强制刷新全局快照来补齐本次数据。
+已有 `CaptureReport` 可区分未请求、空数据、策略跳过、不可用和失败。
+
+入口交互意图（执行前收起搜索窗、继续面板等）由可选的
+`IInvocationPresentationFeature` / `IInvocationPresentationProvider` 声明，详见
+[invocation-presentation.md](invocation-presentation.md)。交互声明不决定采集资源。
+
+## 15. 取消与显式资源采集
+
+`InvokeAsync` 中将 `context.CancellationToken` 传给文件、网络、等待和
+`IMioTaskService.RunAsync`。组合节点转发上下文时保留该 token，例如
+`context with { Payload = value }`。五参数构造函数及原有五项解构仍可使用；需要
+手动创建带取消的上下文时使用六参数构造函数或 `with { CancellationToken = token }`。
+旧构造函数和工厂默认使用不取消的 token。
+
+通常只消费宿主传入的快照。确需独立采集桌面资源时，通过
+`IInvocationCaptureService.CaptureAsync(new InvocationCaptureRequest { Resources = ... }, token)`
+请求所需资源；`CaptureResources` 可组合 WindowIdentity、WindowDetails、ClipboardText、
+ClipboardFiles、Explorer 等。直接调用不设置 Existing，它只供原采集会话补采使用。
+按 snapshot.CaptureReport 的单项资源状态判断结果，不能将空数据与采集失败混为一谈。
+InvocationCaptureReport 索引器只查询单项标记，不聚合 Clipboard 等组合标记。

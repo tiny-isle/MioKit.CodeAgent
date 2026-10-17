@@ -9,6 +9,10 @@ mcp/       Node.js MCP 服务（npm 包名 @tiny-isle/miokit-mcp）
 skills/    Agent Skills（skills.sh 发现入口）
 ```
 
+## 开发基线
+
+Skill 对应 MioKit 1.3 系列的公开插件 API，包括插件 Scope 服务、桌面通知、任务管理、分阶段调用快照和执行取消。NuGet 包版本以模板生成的项目引用为准；plugin.json 的最低 SDK / 宿主版本须覆盖实际使用的 API。MCP 的 npm 版本独立维护，无需与宿主版本保持相同。
+
 ## 安装 Skill
 
 ```bash
@@ -43,7 +47,7 @@ npm install
 npm start
 ```
 
-本仓库 `.cursor/mcp.json` 已指向 `mcp/`。在 Cursor Settings → MCP 中启用 `miokit-mcp` 后，Agent 即可调工具。
+在客户端 MCP 配置中添加本地启动命令（工作目录设为 `mcp/`），或使用下面的 npm 包配置。
 
 别人用已发布包（不必 clone 本仓库）：
 

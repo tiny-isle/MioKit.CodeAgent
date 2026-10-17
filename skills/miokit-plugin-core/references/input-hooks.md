@@ -44,7 +44,9 @@ IHotkeyFeature 节点         HotkeyProperty → InvokeAsync(InvokeContext.FromH
 2. 将实现 `IGlobalHotKeyService` 的宿主热键处理器挂入键盘链
 3. `keyboardHook.StartAsync()` — **键盘 Hook 已启动**
 
-**鼠标 Hook 默认未启动**。插件若需全局鼠标监听，须自行 `MioIoc.Resolve<IMouseHook>()` 并 `StartAsync`（见 §6）。
+**鼠标 Hook 默认未启动**。插件若需全局鼠标监听，须自行 `MioIoc.Resolve<IMouseHook>()` 并 `await StartAsync()`（见 §6）。
+
+`IKeyboardHook` / `IMouseHook` 的 `StartAsync` 会等待底层钩子安装成功，安装失败时把异常交给调用方。`StopAsync` 会等待底层资源释放；若在钩子自己的同步回调线程里调用，只请求停止并立即返回，避免等待自身退出。取消令牌只取消当前这次等待，不会中断其他调用者已经开始的共享启动或停止。键盘钩子由宿主持有，插件不要再调用它的 `StartAsync` / `StopAsync`。
 
 宿主会初始化节点热键桥接服务，确保挂树后的 `IHotkeyFeature` 能同步到 `IGlobalHotKeyService`。
 
@@ -188,9 +190,12 @@ public enum InputEventHandleResult : byte
 | 属性 | 说明 |
 |------|------|
 | `CurrentKey` | `MouseKey`（Left / Right / Middle / Wheel / XButton1 / XButton2） |
-| `Position` | 屏幕坐标 `Point` |
+| `Position` | 屏幕像素坐标 `Point`；副屏在主屏左侧或上方时可以为负 |
 | `Delta` | 滚轮增量 |
 | `IsDoubleClick` | 是否双击 |
+| `ExtraInfo` | 原生 `dwExtraInfo`（`nuint`）。注入回放时写入私有标记，并在 Handler 里忽略相同标记的事件 |
+
+`IsSimulator` 只表示这次输入是注入的，不能区分注入者。插件把自己的鼠标操作回放进系统时，应把私有标记放进 `dwExtraInfo`，收到 `MouseEventArgs.ExtraInfo` 相同的事件后直接返回，避免钩子再次处理自己发出的输入。未带标记的旧构造路径里 `ExtraInfo` 为 `0`。键盘事件没有 `ExtraInfo`。
 
 ### Keys 与 MouseKey
 
@@ -236,8 +241,10 @@ hook.RegisterHandler(new MyKeyCapture());
 ```csharp
 var mouseHook = MioIoc.Resolve<IMouseHook>();
 mouseHook.RegisterHandler(myMouseHandler);
-await mouseHook.StartAsync();   // 宿主默认未启动，需显式 Start
+await mouseHook.StartAsync();   // 宿主默认未启动，需等待安装成功
 ```
+
+插件停止时注销自己的 Handler。只有确定没有其他使用者时才 `StopAsync` 鼠标钩子；不要停止宿主的键盘钩子。
 
 ### 6.3 直接操作 IGlobalHotKeyService
 
@@ -281,6 +288,7 @@ Hook 与热键服务注册在宿主全局容器中，不在插件 `RegisterServi
 | 自定义 Handler 设置合理 `InputHandlerOrder` | Order 随意导致拦截宿主热键或搜索框 |
 | `StopCoreAsync` 注销 Handler / 手动 Register 的热键 | 插件卸载后仍留 Handler 或占用热键 Id |
 | 用 `KeyCode` + `HotKeyInfo.TypeExactMatch` 定义组合 | 发明未文档化的 HotKey 匹配类型 |
+| 回放鼠标时用 `ExtraInfo` 标记并忽略自己的事件 | 只靠 `IsSimulator` 过滤注入，或把鼠标坐标当成窗口客户区坐标 |
 
 ---
 

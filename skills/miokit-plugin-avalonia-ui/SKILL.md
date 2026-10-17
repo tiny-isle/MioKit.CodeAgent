@@ -32,6 +32,8 @@ description: >-
 - [mvvm.md](references/mvvm.md)：CommunityToolkit.Mvvm、编译绑定、命令、集合、异步、
   UI 线程、View/ViewModel 边界和生命周期约定。
 
+- [dialogs-and-node-list.md](references/dialogs-and-node-list.md)：MioDialogPanel、MioDialogWindow、MioNodeList 与节点搜索辅助 API。
+
 ## 工作约定
 
 1. 先确认宿主已提供 `ShadTheme`，在 AXAML 中使用已注册的语义

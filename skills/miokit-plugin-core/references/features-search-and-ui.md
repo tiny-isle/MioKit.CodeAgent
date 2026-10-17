@@ -175,6 +175,7 @@ public sealed class SettingsWindowNode(string id) : MioObject(id), IWindowStateF
 | `IIgnoreSearchFeature` | 标记 | 排除搜索 |
 | `ISearchableFeature` | 行为 | 贡献搜索结果 |
 | `IInvokeFeature` | 行为 | 可执行 |
+| `IInvocationPresentationFeature` | 组合行为 | 入口交互意图（执行前收起/继续面板） |
 | `IPinnedFeature` | 标记 | 置顶排序 |
 | `IUseFeature` | 标记 | 最近使用 |
 | `IIconProviderFeature` | 行为 | 图标 |

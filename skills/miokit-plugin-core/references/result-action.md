@@ -267,6 +267,18 @@ _registration = registry.RegisterActions(
 `ClipboardSnapshot.Empty`。快捷方法只包装 `IResultActionExtensionHandler`，返回的
 `IDisposable` 仍须在插件停止时释放。
 
+宿主剪贴板上下文节点的稳定 `MioType` 在 `ClipboardContextNodeTypes`：
+
+| 常量 | 内容 |
+|------|------|
+| `PlainText` | 纯文本 |
+| `SingleFile` | 单个文件 |
+| `MultipleFiles` | 多个文件 |
+| `SingleFolder` | 单个文件夹 |
+| `Image` | 图片 |
+
+按这些常量注册，不要复制字面量 Guid，也不要依赖宿主节点的运行时类型名。
+
 ### 扩展处理器
 
 处理器接收当前 `SearchResult` 和目标 `MioObject`，返回需要追加的操作：
@@ -326,3 +338,20 @@ ResultAction 不替代 `InvokeAsync`：
 - [ ] 跨插件 Action 按目标稳定 `MioType` 或 SDK Feature 注册，并在插件停止时释放 `IDisposable` 令牌
 - [ ] 跨插件扩展处理器尊重取消，不直接写目标插件属性；需要修改状态时使用 Plugin Call
 - [ ] 已在 `docs/features-and-properties.md` 记录节点 Feature
+
+## 可选执行交互声明
+
+结果动作可额外实现 `IInvocationPresentationProvider`，通过同步、无副作用的
+`GetPresentation(InvocationPresentationRequest)` 返回入口交互意图：
+
+```csharp
+public InvocationPresentation GetPresentation(InvocationPresentationRequest request) => new()
+{
+    Interaction = InvocationInteraction.CompleteBeforeExecution
+};
+```
+
+动作不继承 `IFeature`，不需要实现节点的 `IInvocationPresentationFeature`。
+宿主使用动作自身的声明，不继承所属节点的交互声明；鼠标和键盘执行遵循同一入口协调。
+原有 `ExecuteAsync` 签名及未声明动作的默认行为保持不变。
+详见 [invocation-presentation.md](invocation-presentation.md)。

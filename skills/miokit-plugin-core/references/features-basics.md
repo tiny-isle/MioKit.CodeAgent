@@ -175,6 +175,68 @@ if (node.TryMatch(request.SearchText!, out var match, out var title)) { ... }
 
 用户选中并执行（回车/运行）时调用。`InvokeContext` 携带 `InvocationSnapshot`（环境快照）、来源与可选 `SearchResult` → [invocation-snapshot.md](invocation-snapshot.md)。
 
+需要声明执行前收起入口或继续面板交互时，组合实现 `IInvocationPresentationFeature` →
+[invocation-presentation.md](invocation-presentation.md)。
+
+---
+
+## IInvocationPresentationFeature
+
+| 项 | 说明 |
+|----|------|
+| 类型 | **组合行为**（可选），继承 `IFeature` 与 `IInvocationPresentationProvider` |
+| 方法 | `InvocationPresentation GetPresentation(InvocationPresentationRequest request)` |
+
+与 `IInvokeFeature` 组合。同步、无副作用地声明入口交互意图；宿主负责窗口与焦点，
+节点不得自行隐藏搜索窗。未实现时按 `Default`（入口原规则）。
+
+```csharp
+public class LaunchAppNode : MioObject, IInvokeFeature, IInvocationPresentationFeature
+{
+    public LaunchAppNode(string id) : base(id) { }
+
+    public InvocationPresentation GetPresentation(InvocationPresentationRequest request) => new()
+    {
+        Interaction = InvocationInteraction.CompleteBeforeExecution
+    };
+
+    public Task InvokeAsync(InvokeContext context) => Task.CompletedTask;
+}
+```
+
+完整约定（`Continue` / `CompleteBeforeExecution`、结果动作 Provider、组合转发）见
+[invocation-presentation.md](invocation-presentation.md)。
+
+---
+
+## IRequireTargetWindowFeature
+
+| 项 | 说明 |
+|----|------|
+| 类型 | 标记，继承 `IInvokeFeature`，无额外成员、无 EAV |
+| 消费方 | 启动器和主面板；搜索框和全局热键执行规则不变 |
+| 判断对象 | 启动器代理入口看实际目标节点是否实现该接口 |
+
+节点通过启动器或主面板执行时，宿主必须先切换到捕获的目标窗口，并在进入 `InvokeAsync` 前确认窗口仍是该目标。目标不存在、已关闭、身份变化或激活失败时，宿主提示失败，不调用 `InvokeAsync`。
+
+未实现该接口的节点（含旧插件）仍会尝试切换到有效目标；没有目标或切换失败时继续执行。此时调用快照的 `ForegroundWindow.Handle` 为空，剪贴板仍按宿主现有规则采集，插件须容忍缺少窗口上下文。旧插件无需重新编译。依赖输入注入、选中内容或特定外部窗口的节点，在更新 SDK 后实现此标记；普通应用、文件夹和系统入口不要实现。
+
+```csharp
+public class PasteIntoTargetNode : MioObject, IRequireTargetWindowFeature
+{
+    public PasteIntoTargetNode(string id) : base(id) { }
+    public override Guid MioType => MyPluginConst.PasteNodeType;
+
+    public Task InvokeAsync(InvokeContext context)
+    {
+        // 启动器进入这里时，目标窗口已经在前台。
+        return Task.CompletedTask;
+    }
+}
+```
+
+快照字段见 [invocation-snapshot.md](invocation-snapshot.md)。持续监听前台变化用 `IForegroundWindowMonitor`，见 [host-services.md](host-services.md)。
+
 ---
 
 ## IPinnedFeature

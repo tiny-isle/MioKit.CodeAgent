@@ -55,7 +55,7 @@ ValueTask<IIconLease?> GetIconAsync(
 ### `IconSource`
 
 宿主会在加载插件前从当前 Windows 初始化常用图标。插件可直接复用
-`IconSource.MioKit`、`Default`、`Folder`、`File`、`Application`、`Shortcut`、
+`IconSource.MioKit`、`Default`、`Folder`、`File`、`MultipleFiles`、`Application`、`Shortcut`、
 `Settings`、`Terminal`、`TextFile`、`ImageFile`、`Archive`、`Drive`。
 
 - Avalonia 使用对应的 `IImage` 属性，例如 `IconSource.Folder`。

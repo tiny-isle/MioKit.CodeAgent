@@ -17,6 +17,8 @@ Feature 和图标 Provider 语义见 `miokit-plugin-core` 的对应参考文档�
 | `PluginWindowExtensions.SetAppUserModelId` | 设置 Windows 任务栏分组 |
 | `PluginWindowBehavior` | 在 AXAML 中聚合 Owner、AUMID 和图标行为 |
 
+`HighlightedTextBlock` 继承 `TextBlock`，用 `HighlightIndices`（`byte[]`）标出要高亮的字符下标，颜色固定为 `#F7A80A`。高亮只改前景色，字重跟随文本块。下标类型是 `byte`，只覆盖前 256 个字符。没有 `HighlightBrush` 属性。
+
 ### 插件窗口标准模板
 
 插件窗口优先使用 `ShadWindow`。将 `PluginWindowBehavior` 挂到窗口的
